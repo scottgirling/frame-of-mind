@@ -9,6 +9,7 @@ export const AuthContext = createContext({});
 export const useAuthContext = () => useContext(AuthContext);
 
 export const AuthContextProvider = ({ children }) => {
+  const [authUser, setAuthUser] = useState(null);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -18,13 +19,20 @@ export const AuthContextProvider = ({ children }) => {
   // }
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
-      if (authUser) {
-        console.log(authUser);
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      console.log("Auth state changed: ", user)
+      setAuthUser(user);
+    })
+    return () => unsubscribe();
+  }, [])
 
-        if (!authUser.displayName) {
-          await authUser.reload();
-        }
+  useEffect(() => {
+    if (authUser) {
+      console.log(authUser);
+      
+      // if (!authUser.displayName) {
+      //     await authUser.reload();
+      //   }
 
         setUser({
           displayName: authUser.displayName,
@@ -42,10 +50,7 @@ export const AuthContextProvider = ({ children }) => {
         setUser(null);
       }
       setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
+  },[authUser])
 
   return (
     <AuthContext.Provider value={{ user }}>
