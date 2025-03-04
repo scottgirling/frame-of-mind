@@ -1,22 +1,25 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import signUp from "../auth/signUp";
+import { useAuthContext } from "../contexts/LoggedInUser";
 
 export default function Page() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const router = useRouter();
+  const { user } = useAuthContext();
 
   async function handleForm(event) {
     event.preventDefault();
-    console.log(displayName);
-
     await signUp(displayName, email, password);
-    router.push("/home");
   }
+
+  useEffect(() => {
+    if (Object.keys(user).length) router.push("/home");
+  }, []);
 
   return (
     <form onSubmit={handleForm}>

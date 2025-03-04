@@ -6,13 +6,13 @@ export default async function signUp(displayName, email, password) {
   try {
     const newUser = await createUserWithEmailAndPassword(auth, email, password);
 
-    await updateProfile(newUser.user, { displayName });
+    // await updateProfile(newUser.user, { displayName });
 
     await newUser.user.reload();
     const updatedUser = auth.currentUser;
 
     const { result } = await addData("users", updatedUser.uid, {
-      displayName: updatedUser.displayName,
+      displayName: displayName,
       email: updatedUser.email,
       password: updatedUser.reloadUserInfo.passwordHash,
       avatarUrl: "",

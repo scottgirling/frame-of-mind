@@ -40,7 +40,7 @@ export default function HomePage() {
     }
   }
   useEffect(() => {
-    if (user) router.push("/home");
+    if (Object.keys(user).length) router.push("/home");
   }, []);
 
   if (showLoginForm)
