@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import signUp from "../auth/signUp";
 
-
 export default function Page() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -13,8 +12,9 @@ export default function Page() {
 
   async function handleForm(event) {
     event.preventDefault();
-    await signUp(email, displayName, password);
-    console.log(password)
+    console.log(displayName);
+
+    await signUp(displayName, email, password);
     router.push("/home");
   }
 
