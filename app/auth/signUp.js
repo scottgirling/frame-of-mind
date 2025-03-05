@@ -20,8 +20,10 @@ export default async function signUp(displayName, email, password, setLoading) {
       userBio: "",
       points: 0,
       createdAt: newUser.user.metadata.creationTime,
+      lastSignInTime: newUser.user.metadata.lastSignInTime,
       myComics: [],
     });
+    await updateProfile(updatedUser, { displayName });
     setLoading(false);
     return result;
   } catch (e) {

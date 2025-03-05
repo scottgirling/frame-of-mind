@@ -1,6 +1,8 @@
-import handleEmailLogin from "@/utils/handleEmailLogin";
+import handleEmailLogin from "@/app/auth/utils/handleEmailLogin";
+import { auth } from "@/lib/firebase";
 import { Button, TextField } from "@mui/material";
-import { useState } from "react";
+import { use, useState } from "react";
+import { useUpdateProfile } from "react-firebase-hooks/auth";
 
 export default function LoginForm({ setCurrentForm, setLoading }) {
   const [email, setEmail] = useState("");

@@ -1,27 +1,27 @@
 "use client";
 
-import { useAuthContext } from "../../contexts/LoggedInUser";
+// import { useAuthContext } from "../../contexts/LoggedInUser";
 import { useEffect, useState } from "react";
 import HomePage from "./components/Home";
 import LoginButtons from "./components/LoginButtons";
 import LoginForm from "./components/LoginForm";
 import SignUpForm from "./components/SignUpForm";
+import { CircularProgress } from "@mui/material";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "@/lib/firebase";
 
 export default function Home() {
   const [currentForm, setCurrentForm] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const { user, userLoading } = useAuthContext();
+  const [authUser, loading, error] = useAuthState(auth);
+  const [pageLoading, setLoading] = useState(false);
+  // const { user, userLoading } = useAuthContext();
 
-  // useEffect(() => {
-
-  // }, [loading]);
-
-  if (loading || userLoading) {
-    return <p>Loading... </p>;
+  if (loading || pageLoading) {
+    return <CircularProgress />;
   }
 
-  if (Object.keys(user).length) {
-    return <HomePage user={user} />;
+  if (authUser && Object.keys(authUser).length) {
+    return <HomePage user={authUser} />;
   }
 
   if (currentForm === "login") {

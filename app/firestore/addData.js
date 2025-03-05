@@ -37,3 +37,5 @@ export async function addDataWithAutoID(collectionName, data) {
 
   return { result, error };
 }
+
+// VIDEO TO WATCH ON PIXEL ART CANVAS: How to build a Pixel Art Drawing App in React | React Tutorial - https://www.youtube.com/watch?v=IAD68la3An8

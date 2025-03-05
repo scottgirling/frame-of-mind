@@ -1,4 +1,4 @@
-import handleGoogleLogIn from "@/utils/handleGoogleLogin";
+import handleGoogleLogIn from "@/app/auth/utils/handleGoogleLogin";
 import { Button } from "@mui/material";
 
 export default function LoginButtons({ setCurrentForm }) {
