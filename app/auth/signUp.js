@@ -2,11 +2,10 @@ import { auth } from "@/lib/firebase";
 import addData from "../firestore/addData";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 
-export default async function signUp(displayName, email, password) {
+export default async function signUp(displayName, email, password, setLoading) {
   try {
+    setLoading(true);
     const newUser = await createUserWithEmailAndPassword(auth, email, password);
-
-    // await updateProfile(newUser.user, { displayName });
 
     await newUser.user.reload();
     const updatedUser = auth.currentUser;
@@ -23,6 +22,7 @@ export default async function signUp(displayName, email, password) {
       createdAt: newUser.user.metadata.creationTime,
       myComics: [],
     });
+    setLoading(false);
     return result;
   } catch (e) {
     console.log(e);

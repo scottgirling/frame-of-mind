@@ -9,25 +9,34 @@ import SignUpForm from "./components/SignUpForm";
 
 export default function Home() {
   const [currentForm, setCurrentForm] = useState(null);
-  const { user } = useAuthContext();
+  const [loading, setLoading] = useState(false);
+  const { user, userLoading } = useAuthContext();
 
   // useEffect(() => {
 
-  // }, [currentForm])
+  // }, [loading]);
+
+  if (loading || userLoading) {
+    return <p>Loading... </p>;
+  }
 
   if (Object.keys(user).length) {
+    return <HomePage user={user} />;
+  }
+
+  if (currentForm === "login") {
     return (
-      <HomePage user={user}/>
+      <LoginForm setCurrentForm={setCurrentForm} setLoading={setLoading} />
     );
-  } 
-
-  if (currentForm === "login" ) {
-    return <LoginForm setCurrentForm={setCurrentForm} />
   }
 
-  if (currentForm === "signup" ) {
-    return <SignUpForm setCurrentForm={setCurrentForm} />
+  if (currentForm === "signup") {
+    return (
+      <SignUpForm setCurrentForm={setCurrentForm} setLoading={setLoading} />
+    );
   }
 
-  return <LoginButtons setCurrentForm={setCurrentForm} />
+  return (
+    <LoginButtons setCurrentForm={setCurrentForm} setLoading={setLoading} />
+  );
 }
