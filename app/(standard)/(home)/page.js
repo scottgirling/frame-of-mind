@@ -1,7 +1,6 @@
 "use client";
 
-// import { useAuthContext } from "../../contexts/LoggedInUser";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import HomePage from "./components/Home";
 import LoginButtons from "./components/LoginButtons";
 import LoginForm from "./components/LoginForm";
@@ -14,7 +13,6 @@ export default function Home() {
   const [currentForm, setCurrentForm] = useState(null);
   const [authUser, loading, error] = useAuthState(auth);
   const [pageLoading, setLoading] = useState(false);
-  // const { user, userLoading } = useAuthContext();
 
   if (loading || pageLoading) {
     return <CircularProgress />;
