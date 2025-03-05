@@ -1,4 +1,4 @@
-import handleEmailLogin from "@/utils/handleEmailLogin";
+import handleEmailLogin from "@/app/auth/utils/handleEmailLogin";
 import { Button, TextField } from "@mui/material";
 import { useState } from "react";
 

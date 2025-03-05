@@ -16,31 +16,31 @@ export default function SignUpForm({ setCurrentForm, setLoading }) {
   return (
     <form onSubmit={handleForm}>
       <TextField
-        id="outlined-basic"
         label="Email"
         variant="outlined"
         onChange={(e) => setEmail(e.target.value)}
         type="email"
         placeholder="email@website.com"
         value={email}
+        required
       />
       <TextField
-        id="outlined-basic"
         label="Username"
         variant="outlined"
         onChange={(e) => setDisplayName(e.target.value)}
         type="text"
         placeholder="Your username"
         value={displayName}
+        required
       />
       <TextField
-        id="outlined-basic"
         label="Password"
         variant="outlined"
         onChange={(e) => setPassword(e.target.value)}
         type="password"
         placeholder="Your password"
         value={password}
+        required
       />
 
       <Button type="submit" variant="contained">
