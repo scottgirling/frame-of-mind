@@ -1,6 +1,6 @@
 "use client";
-import Canvas from "../components/canvas";
+import MoveObjects from "../components/moveObjects";
 
 export default function Create() {
-  return <Canvas />;
+  return <MoveObjects />;
 }

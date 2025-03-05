@@ -19,7 +19,8 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "roughjs": "^4.6.6",
-    "react-firebase-hooks": "^5.1.1"
+    "react-firebase-hooks": "^5.1.1",
+    "roughjs": "^4.6.6"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
