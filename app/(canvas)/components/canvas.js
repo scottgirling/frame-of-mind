@@ -1,7 +1,14 @@
-import { Box, Button } from "@mui/material";
-import { useLayoutEffect, useState } from "react";
+import { Box, Button, ButtonGroup } from "@mui/material";
+import { visuallyHidden } from "@mui/utils";
+import {
+  ArrowArcLeft,
+  ArrowArcRight,
+  BoundingBox,
+  Cursor,
+} from "@phosphor-icons/react";
+import { LineSegment } from "@phosphor-icons/react/dist/ssr";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import rough from "roughjs/bundled/rough.esm";
-import { useEffect } from "react";
 
 //rough.js tool for generating shapes
 const generator = rough.generator();
@@ -284,47 +291,41 @@ const Canvas = () => {
     setSelectedElement(null);
   };
 
+  // set canvas size
+
+  const refCanvasContainer = useRef(null);
+  const [size, setSize] = useState(0);
+  useEffect(() => {
+    setSize(refCanvasContainer.current.clientHeight);
+  }, [refCanvasContainer]);
+
   return (
-    <div>
-      <div>
-        <Button
-          variant={tool === "selection" ? "contained" : "outlined"}
-          onClick={() => setTool("selection")}
-        >
-          Selection
+    <>
+      <ButtonGroup sx={{ mx: "auto", my: 2 }}>
+        <Button variant="outlined" onClick={undo}>
+          <ArrowArcLeft size={20} /> <Box sx={visuallyHidden}>Undo</Box>
         </Button>
-        <Button
-          variant={tool === "line" ? "contained" : "outlined"}
-          onClick={() => setTool("line")}
-        >
-          Line │
+        <Button variant="outlined" onClick={redo}>
+          <ArrowArcRight size={20} /> <Box sx={visuallyHidden}>Redo</Box>
         </Button>
-        <Button
-          variant={tool === "rectangle" ? "contained" : "outlined"}
-          onClick={() => setTool("rectangle")}
-        >
-          Rectangle ▉
-        </Button>
+      </ButtonGroup>
 
-        <Button
-          variant={tool === "undo" ? "contained" : "outlined"}
-          onClick={undo}
-        >
-          Undo ↺
-        </Button>
-        <Button
-          variant={tool === "redo" ? "contained" : "outlined"}
-          onClick={redo}
-        >
-          Redo ↻
-        </Button>
-      </div>
-
-      <Box sx={{ bgcolor: "primary.light" }}>
+      <Box
+        ref={refCanvasContainer}
+        sx={{
+          bgcolor: "rgba(255,255,255,0.9)",
+          border: "3px solid",
+          borderColor: "primary.light",
+          aspectRatio: "1/1",
+          mx: "auto",
+          height: "100%",
+          borderRadius: 2,
+        }}
+      >
         <canvas
           id="canvas"
-          width={window.innerWidth}
-          height={window.innerHeight}
+          height={size}
+          width={size}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
@@ -332,7 +333,29 @@ const Canvas = () => {
           Canvas
         </canvas>
       </Box>
-    </div>
+      <ButtonGroup sx={{ mx: "auto", my: 2 }}>
+        <Button
+          variant={tool === "selection" ? "contained" : "outlined"}
+          onClick={() => setTool("selection")}
+        >
+          <Cursor size={20} />{" "}
+          <Box sx={visuallyHidden}>Move and Manipulate Object Tool</Box>
+        </Button>
+        <Button
+          variant={tool === "line" ? "contained" : "outlined"}
+          onClick={() => setTool("line")}
+        >
+          <LineSegment size={20} /> <Box sx={visuallyHidden}>Line Tool</Box>
+        </Button>
+        <Button
+          variant={tool === "rectangle" ? "contained" : "outlined"}
+          onClick={() => setTool("rectangle")}
+        >
+          <BoundingBox size={20} />{" "}
+          <Box sx={visuallyHidden}>Rectangle Tool</Box>
+        </Button>
+      </ButtonGroup>
+    </>
   );
 };
 export default Canvas;
