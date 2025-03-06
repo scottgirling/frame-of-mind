@@ -1,16 +1,23 @@
 import { AppBar, Toolbar, Typography } from "@mui/material";
 import Logo from "./Logo";
-import Avatar from "./Avatar";
+import Link from "next/link";
 
-export default function TopBar() {
+export default function TopBar({ components }) {
   return (
     <AppBar position="static" color="light" variant="outlined">
       <Toolbar component={"nav"}>
-        <Logo />{" "}
-        <Typography variant="h5" color="primary">
-          Frame of Mind
-        </Typography>{" "}
-        <Avatar sx={{ ml: "auto" }} />
+        <Link href="/">
+          <Logo />
+          <Typography
+            sx={{ display: "inline", verticalAlign: "middle", ml: 1 }}
+            variant="h5"
+            color="primary"
+          >
+            Frame of Mind
+          </Typography>
+        </Link>
+
+        {components}
       </Toolbar>
     </AppBar>
   );
