@@ -1,11 +1,13 @@
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { Button } from "@mui/material";
+import { Button, Typography } from "@mui/material";
 
 export default function HomePage({ user }) {
   return (
     <>
-      <p>You are logged in as {user.displayName}</p>
+      <Typography variant="body1">
+        You are logged in as {user.displayName}
+      </Typography>
       <Button
         onClick={() => {
           signOut(auth);
