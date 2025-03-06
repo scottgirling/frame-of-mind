@@ -1,5 +1,5 @@
-import { Box, Button } from "@mui/material";
-import { useLayoutEffect, useState } from "react";
+import { Box, Button, ButtonGroup } from "@mui/material";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import rough from "roughjs/bundled/rough.esm";
 
 //rough.js tool for generating shapes
@@ -235,9 +235,46 @@ const Canvas = () => {
     setAction("none");
     setSelectedElement(null);
   };
+
+  // set canvas size
+
+  const refCanvasContainer = useRef(null);
+  const [size, setSize] = useState(0);
+  useEffect(() => {
+    setSize(refCanvasContainer.current.clientHeight);
+  }, [refCanvasContainer]);
+
   return (
-    <div>
-      <div>
+    <>
+      <ButtonGroup sx={{ mx: "auto", my: 2 }}>
+        <Button variant="outlined">Undo</Button>
+        <Button variant="outlined">Redo</Button>
+      </ButtonGroup>
+
+      <Box
+        ref={refCanvasContainer}
+        sx={{
+          bgcolor: "rgba(255,255,255,0.9)",
+          border: "3px solid",
+          borderColor: "primary.light",
+          aspectRatio: "1/1",
+          mx: "auto",
+          height: "100%",
+          borderRadius: 2,
+        }}
+      >
+        <canvas
+          id="canvas"
+          height={size}
+          width={size}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+        >
+          Canvas
+        </canvas>
+      </Box>
+      <ButtonGroup sx={{ mx: "auto", my: 2 }}>
         <Button
           variant={tool === "selection" ? "contained" : "outlined"}
           onClick={() => setTool("selection")}
@@ -256,23 +293,8 @@ const Canvas = () => {
         >
           Rectangle
         </Button>
-        {/* <Button onClick={undo}>Undo</Button>
-        <Button onClick={redo}>Redo</Button> */}
-      </div>
-
-      <Box sx={{ bgcolor: "primary.light" }}>
-        <canvas
-          id="canvas"
-          width={window.innerWidth}
-          height={window.innerHeight}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-        >
-          Canvas
-        </canvas>
-      </Box>
-    </div>
+      </ButtonGroup>
+    </>
   );
 };
 export default Canvas;
