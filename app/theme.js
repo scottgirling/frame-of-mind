@@ -1,5 +1,8 @@
 "use client";
 import { createTheme } from "@mui/material/styles";
+
+import { Shantell_Sans } from "next/font/google";
+const font = Shantell_Sans({ subsets: ["latin"] });
 // create a temporary theme to get the default options
 const defaultTheme = createTheme();
 
