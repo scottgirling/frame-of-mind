@@ -1,8 +1,7 @@
-import "./globals.css";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
 import { ThemeProvider } from "@mui/material/styles";
 import theme from "./theme";
-import { Box } from "@mui/material";
+import { Box, CssBaseline } from "@mui/material";
 
 export const metadata = {
   title: "Frame of Mind",
@@ -14,6 +13,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body>
         <AppRouterCacheProvider>
+          <CssBaseline />
           <ThemeProvider theme={theme}>
             <Box
               sx={{
