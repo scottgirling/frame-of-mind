@@ -5,8 +5,11 @@ import {
   ArrowArcRight,
   BoundingBox,
   Cursor,
+  Pencil,
 } from "@phosphor-icons/react";
 import { LineSegment } from "@phosphor-icons/react/dist/ssr";
+import next from "next";
+import getStroke from "perfect-freehand";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import rough from "roughjs/bundled/rough.esm";
 
@@ -14,13 +17,22 @@ import rough from "roughjs/bundled/rough.esm";
 const generator = rough.generator();
 
 //function for creating squares or lines
-function createElement(id, x1, y1, x2, y2, type) {
-  const roughElement =
-    type === "line"
-      ? generator.line(x1, y1, x2, y2)
-      : generator.rectangle(x1, y1, x2 - x1, y2 - y1);
-  return { id, x1, y1, x2, y2, type, roughElement };
-}
+const createElement = (id, x1, y1, x2, y2, type) => {
+  switch (type) {
+    case "line":
+    case "rectangle":
+      const roughElement =
+        type === "line"
+          ? generator.line(x1, y1, x2, y2)
+          : generator.rectangle(x1, y1, x2 - x1, y2 - y1);
+      return { id, x1, y1, x2, y2, type, roughElement };
+    case "pencil":
+      return { id, type, points: [{ x: x1, y: y1 }] };
+
+    default: // If type isn't a specified case => throw err
+      throw new Error(`Invalid type: type not recognised: ${type}`);
+  }
+};
 
 // Function to check if a point is near another point. We use it for resizing elements
 //check the x/y position of the mouse and compares it to the x1 position of the element. Name is the part of the element - ie tr, br, bl, tl
@@ -33,25 +45,45 @@ const nearPoint = (x, y, x1, y1, name) => {
 //first checks if the mouse is near any of the points of the rectangle and calls the nearpoint function
 //it also check if the mouse is inside the element
 
+const onLine = (x1, y1, x2, y2, x, y, distanceOffset = 5) => {
+  const a = { x: x1, y: y1 };
+  const b = { x: x2, y: y2 };
+  const c = { x, y };
+  const offset = distance(a, b) - (distance(a, c) + distance(b, c));
+  return Math.abs(offset) < 5 ? "inside" : null; // To increase accuracy of selection on drawing points => increase offset value
+};
+
 //the else statement does the same but for a line - but checks if the mouse is at the start, end or anywhere along the line
 const positionWithinElement = (x, y, element) => {
   const { type, x1, x2, y1, y2 } = element;
-  if (type === "rectangle") {
-    const topLeft = nearPoint(x, y, x1, y1, "tl");
-    const topRight = nearPoint(x, y, x2, y1, "tr");
-    const bottomLeft = nearPoint(x, y, x1, y2, "bl");
-    const bottomRight = nearPoint(x, y, x2, y2, "br");
-    const inside = x >= x1 && x <= x2 && y >= y1 && y <= y2 ? "inside" : null;
-    return topLeft || topRight || bottomLeft || bottomRight || inside;
-  } else {
-    const a = { x: x1, y: y1 };
-    const b = { x: x2, y: y2 };
-    const c = { x, y };
-    const offset = distance(a, b) - (distance(a, c) + distance(b, c));
-    const start = nearPoint(x, y, x1, y1, "start");
-    const end = nearPoint(x, y, x2, y2, "end");
-    const inside = Math.abs(offset) < 1 ? "inside" : null;
-    return start || end || inside;
+
+  switch (type) {
+    case "line":
+      const on = onLine(x1, y1, x2, y2, x, y);
+      const start = nearPoint(x, y, x1, y1, "start");
+      const end = nearPoint(x, y, x2, y2, "end");
+      return start || end || on;
+    case "rectangle":
+      const topLeft = nearPoint(x, y, x1, y1, "tl");
+      const topRight = nearPoint(x, y, x2, y1, "tr");
+      const bottomLeft = nearPoint(x, y, x1, y2, "bl");
+      const bottomRight = nearPoint(x, y, x2, y2, "br");
+      const inside = x >= x1 && x <= x2 && y >= y1 && y <= y2 ? "inside" : null;
+      return topLeft || topRight || bottomLeft || bottomRight || inside;
+    case "pencil":
+      const betweenAnyPoint = element.points.some((point, index) => {
+        const nextPoint = element.points[index + 1];
+        if (!nextPoint) {
+          return false;
+        }
+        return onLine(point.x, point.y, nextPoint.x, nextPoint.y, x, y) != null; // If not null => return point value.
+      });
+
+      const onPath = betweenAnyPoint ? "inside" : null;
+
+      return onPath;
+    default:
+      throw new Error(`Invalid type: type not recognised: ${type}`);
   }
 };
 
@@ -167,6 +199,48 @@ const useHistory = (initialState) => {
   return [history[index], setState, undo, redo]; //returns the current state and the set state function
 };
 
+const getSvgPathFromStroke = (stroke) => {
+  if (!stroke.length) return "";
+
+  const d = stroke.reduce(
+    (acc, [x0, y0], i, arr) => {
+      const [x1, y1] = arr[(i + 1) % arr.length];
+      acc.push(x0, y0, (x0 + x1) / 2, (y0 + y1) / 2);
+      return acc;
+    },
+    ["M", ...stroke[0], "Q"]
+  );
+
+  d.push("Z");
+  return d.join(" ");
+};
+
+const drawElement = (roughCanvas, context, element) => {
+  switch (element.type) {
+    case "line":
+    case "rectangle":
+      roughCanvas.draw(element.roughElement);
+      break;
+    case "pencil":
+      // Options params for the stroke (thickness etc.)
+      const stroke = getSvgPathFromStroke(
+        getStroke(element.points, {
+          options: {
+            size: 20,
+          },
+        })
+      );
+      context.fill(new Path2D(stroke)); // Keeping track of users draw path via SVG
+      break;
+
+    default:
+      throw new Error(`Invalid type: type not recognised: ${element.type}`);
+  }
+};
+
+// Check i
+const adjustmentRequired = (type) => ["line", "rectangle"].includes(type);
+
 const Canvas = () => {
   const [elements, setElements, undo, redo] = useHistory([]); // Setting initial history state to an empty array
   const [action, setAction] = useState("none");
@@ -184,7 +258,7 @@ const Canvas = () => {
     const roughCanvas = rough.canvas(canvas);
 
     //iterates over the elements array and draws them on the canvas
-    elements.forEach(({ roughElement }) => roughCanvas.draw(roughElement));
+    elements.forEach((element) => drawElement(roughCanvas, context, element));
   }, [elements]);
 
   // Enables user to use keyboard shortcuts to undo and redo actions
@@ -211,40 +285,28 @@ const Canvas = () => {
   //type - line or square
   const updateElement = (id, x1, y1, x2, y2, type) => {
     //calls the create element function with the new coordinates
-    const updatedElement = createElement(id, x1, y1, x2, y2, type);
     const elementsCopy = [...elements];
-    //updates the element which has been selected by its id
-    elementsCopy[id] = updatedElement;
+
     //sets the state with updated element
     setElements(elementsCopy, true);
-  };
 
-  const handleMouseDown = (event) => {
-    // const { clientX, clientY } = event;
-    const rect = event.target.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-    if (tool === "selection") {
-      const element = getElementAtPosition(x, y, elements);
-      if (element) {
-        const offsetX = x - element.x1;
-        const offsetY = y - element.y1;
-        setSelectedElement({ ...element, offsetX, offsetY });
-        setElements((prevState) => prevState);
-        if (element.position === "inside") {
-          setAction("moving");
-        } else {
-          setAction("resizing");
-        }
-      }
-    } else {
-      const id = elements.length;
-      const element = createElement(id, x, y, x, y, tool);
-      setElements((prevState) => [...prevState, element]);
-      setSelectedElement(element);
-      setAction("drawing");
+    switch (type) {
+      case "line":
+      case "rectangle":
+        //updates the element which has been selected by its id
+        elementsCopy[id] = createElement(id, x1, y1, x2, y2, type);
+        break;
+      case "pencil":
+        elementsCopy[id].points = [
+          ...elementsCopy[id].points,
+          { x: x2, y: y2 },
+        ];
+        break;
+      default:
+        throw new Error(`Invalid type: type not recognised: ${type}`);
     }
   };
+
   const handleMouseMove = (event) => {
     const rect = event.target.getBoundingClientRect();
     const x = event.clientX - rect.left;
@@ -282,13 +344,44 @@ const Canvas = () => {
     if (selectedElement) {
       const index = selectedElement.id;
       const { id, type } = elements[index];
-      if (action === "drawing" || action === "resizing") {
+      if (
+        (action === "drawing" || action === "resizing") &&
+        adjustmentRequired(type)
+      ) {
+        // Calling func to check if element needs adjustment
         const { x1, y1, x2, y2 } = adjustElementCoordinates(elements[index]);
         updateElement(id, x1, y1, x2, y2, type);
       }
     }
     setAction("none");
     setSelectedElement(null);
+  };
+
+  const handleMouseDown = (event) => {
+    // const { clientX, clientY } = event;
+    const rect = event.target.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    if (tool === "selection") {
+      const element = getElementAtPosition(x, y, elements);
+      if (element) {
+        const offsetX = x - element.x1;
+        const offsetY = y - element.y1;
+        setSelectedElement({ ...element, offsetX, offsetY });
+        setElements((prevState) => prevState);
+        if (element.position === "inside") {
+          setAction("moving");
+        } else {
+          setAction("resizing");
+        }
+      }
+    } else {
+      const id = elements.length;
+      const element = createElement(id, x, y, x, y, tool);
+      setElements((prevState) => [...prevState, element]);
+      setSelectedElement(element);
+      setAction("drawing");
+    }
   };
 
   // set canvas size
@@ -354,8 +447,17 @@ const Canvas = () => {
           <BoundingBox size={20} />{" "}
           <Box sx={visuallyHidden}>Rectangle Tool</Box>
         </Button>
+
+        <Button
+          variant={tool === "pencil" ? "contained" : "outlined"}
+          onClick={() => setTool("pencil")}
+        >
+          <Pencil size={20} /> <Box sx={visuallyHidden}> Pencil tool </Box>
+        </Button>
       </ButtonGroup>
     </>
   );
 };
 export default Canvas;
+
+// Time of video: 23: 50
