@@ -9,6 +9,7 @@ import {
 import { LineSegment } from "@phosphor-icons/react/dist/ssr";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import rough from "roughjs/bundled/rough.esm";
+import { useEffect } from "react";
 
 //rough.js tool for generating shapes
 const generator = rough.generator();
@@ -139,9 +140,37 @@ const resizedCoordinates = (x, y, position, coordinates) => {
 //action - used to determin if the user is drawing, resizing or moving
 //tool - stores whihc tool is currently selected - line, rectangle
 //selectedElement - used to store the currently selected element for moving or resizing
+
+const useHistory = (initialState) => {
+  const [index, setIndex] = useState(0);
+  const [history, setHistory] = useState([initialState]);
+  const setState = (action, overwrite = false) => {
+    const newState =
+      typeof action === "function" ? action(history[index]) : action;
+    if (overwrite) {
+      const historyCopy = [...history];
+      historyCopy[index] = newState;
+      setHistory(historyCopy);
+    } else {
+      const updatedState = [...history].slice(0, index + 1);
+      setHistory([...updatedState, newState]);
+      setIndex((prevState) => prevState + 1);
+    }
+  };
+
+  const undo = () => {
+    index > 0 && setIndex((prevState) => prevState - 1);
+  };
+  const redo = () => {
+    index < history.length - 1 && setIndex((prevState) => prevState + 1);
+  };
+
+  return [history[index], setState, undo, redo]; //returns the current state and the set state function
+};
+
 const Canvas = () => {
-  const [elements, setElements] = useState([]);
-  const [action, setAction] = useState(false);
+  const [elements, setElements, undo, redo] = useHistory([]); // Setting initial history state to an empty array
+  const [action, setAction] = useState("none");
   const [tool, setTool] = useState("line");
   const [selectedElement, setSelectedElement] = useState(null);
 
@@ -159,6 +188,24 @@ const Canvas = () => {
     elements.forEach(({ roughElement }) => roughCanvas.draw(roughElement));
   }, [elements]);
 
+  // Enables user to use keyboard shortcuts to undo and redo actions
+  useEffect(() => {
+    const undoRedoFunction = (event) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === "z") {
+        if (event.shiftKey) {
+          redo();
+        } else {
+          undo();
+        }
+      }
+    };
+
+    document.addEventListener("keydown", undoRedoFunction);
+    return () => {
+      document.removeEventListener("keydown", undoRedoFunction);
+    };
+  }, [undo, redo]);
+
   //used to update the elemetents coordinates when one is moved or resized and then sets it back into state
   //id is the identifer of the element
   // x1, y1, x2, y2 are the new coordinates
@@ -170,7 +217,7 @@ const Canvas = () => {
     //updates the element which has been selected by its id
     elementsCopy[id] = updatedElement;
     //sets the state with updated element
-    setElements(elementsCopy);
+    setElements(elementsCopy, true);
   };
 
   const handleMouseDown = (event) => {
@@ -184,6 +231,7 @@ const Canvas = () => {
         const offsetX = x - element.x1;
         const offsetY = y - element.y1;
         setSelectedElement({ ...element, offsetX, offsetY });
+        setElements((prevState) => prevState);
         if (element.position === "inside") {
           setAction("moving");
         } else {
