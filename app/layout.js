@@ -18,6 +18,7 @@ export default function RootLayout({ children }) {
             <Box
               sx={{
                 bgcolor: "light.main",
+                color: "primary.dark",
                 display: "flex",
                 flexDirection: "column",
                 minHeight: "100vh",
