@@ -6,13 +6,17 @@ export default function TopBar({ components }) {
   return (
     <AppBar position="static" color="light" variant="outlined">
       <Toolbar component={"nav"}>
-        <Link href="/">
+        <Link
+          href="/"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: ".5rem",
+            textDecoration: "none",
+          }}
+        >
           <Logo />
-          <Typography
-            sx={{ display: "inline", verticalAlign: "middle", ml: 1 }}
-            variant="h5"
-            color="primary"
-          >
+          <Typography variant="h5" color="primary">
             Frame of Mind
           </Typography>
         </Link>
