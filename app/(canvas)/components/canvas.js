@@ -1,4 +1,4 @@
-import { Button } from "@mui/material";
+import { Box, Button } from "@mui/material";
 import { useLayoutEffect, useState } from "react";
 import rough from "roughjs/bundled/rough.esm";
 
@@ -107,19 +107,19 @@ const cursorForPosition = (position) => {
 
 //calculates the new coordinates when an element is resized. The cases determin where o the object the curser is, and
 //therefore whihc coordinate should be updated.
-const resizedCoordinates = (clientX, clientY, position, coordinates) => {
+const resizedCoordinates = (x, y, position, coordinates) => {
   const { x1, y1, x2, y2 } = coordinates;
   switch (position) {
     case "tl":
     case "start":
-      return { x1: clientX, y1: clientY, x2, y2 };
+      return { x1: x, y1: y, x2, y2 };
     case "tr":
-      return { x1, y1: clientY, x2: clientX, y2 };
+      return { x1, y1: y, x2: x, y2 };
     case "bl":
-      return { x1: clientX, y1, x2, y2: clientY };
+      return { x1: x, y1, x2, y2: y };
     case "br":
     case "end":
-      return { x1, y1, x2: clientX, y2: clientY };
+      return { x1, y1, x2: x, y2: y };
     default:
       return null;
   }
@@ -166,12 +166,15 @@ const Canvas = () => {
   };
 
   const handleMouseDown = (event) => {
-    const { clientX, clientY } = event;
+    // const { clientX, clientY } = event;
+    const rect = event.target.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
     if (tool === "selection") {
-      const element = getElementAtPosition(clientX, clientY, elements);
+      const element = getElementAtPosition(x, y, elements);
       if (element) {
-        const offsetX = clientX - element.x1;
-        const offsetY = clientY - element.y1;
+        const offsetX = x - element.x1;
+        const offsetY = y - element.y1;
         setSelectedElement({ ...element, offsetX, offsetY });
         if (element.position === "inside") {
           setAction("moving");
@@ -181,23 +184,19 @@ const Canvas = () => {
       }
     } else {
       const id = elements.length;
-      const element = createElement(
-        id,
-        clientX,
-        clientY,
-        clientX,
-        clientY,
-        tool
-      );
+      const element = createElement(id, x, y, x, y, tool);
       setElements((prevState) => [...prevState, element]);
       setSelectedElement(element);
       setAction("drawing");
     }
   };
   const handleMouseMove = (event) => {
-    const { clientX, clientY } = event;
+    const rect = event.target.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    // const { clientX, clientY } = event;
     if (tool === "selection") {
-      const element = getElementAtPosition(clientX, clientY, elements);
+      const element = getElementAtPosition(x, y, elements);
       event.target.style.cursor = element
         ? cursorForPosition(element.position)
         : "default";
@@ -205,19 +204,19 @@ const Canvas = () => {
     if (action === "drawing") {
       const index = elements.length - 1;
       const { x1, y1 } = elements[index];
-      updateElement(index, x1, y1, clientX, clientY, tool);
+      updateElement(index, x1, y1, x, y, tool);
     } else if (action === "moving") {
       const { id, x1, x2, y1, y2, type, offsetX, offsetY } = selectedElement;
       const width = x2 - x1;
       const height = y2 - y1;
-      const nexX1 = clientX - offsetX;
-      const nexY1 = clientY - offsetY;
+      const nexX1 = x - offsetX;
+      const nexY1 = y - offsetY;
       updateElement(id, nexX1, nexY1, nexX1 + width, nexY1 + height, type);
     } else if (action === "resizing") {
       const { id, type, position, ...coordinates } = selectedElement;
       const { x1, y1, x2, y2 } = resizedCoordinates(
-        clientX,
-        clientY,
+        x,
+        y,
         position,
         coordinates
       );
@@ -239,23 +238,40 @@ const Canvas = () => {
   return (
     <div>
       <div>
-        <Button onClick={() => setTool("selection")}>Selection</Button>
-        <Button onClick={() => setTool("line")}>Line</Button>
-        <Button onClick={() => setTool("rectangle")}>Rectangle</Button>
+        <Button
+          variant={tool === "selection" ? "contained" : "outlined"}
+          onClick={() => setTool("selection")}
+        >
+          Selection
+        </Button>
+        <Button
+          variant={tool === "line" ? "contained" : "outlined"}
+          onClick={() => setTool("line")}
+        >
+          Line
+        </Button>
+        <Button
+          variant={tool === "rectangle" ? "contained" : "outlined"}
+          onClick={() => setTool("rectangle")}
+        >
+          Rectangle
+        </Button>
         {/* <Button onClick={undo}>Undo</Button>
         <Button onClick={redo}>Redo</Button> */}
       </div>
 
-      <canvas
-        id="canvas"
-        width={window.innerWidth}
-        height={window.innerHeight}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-      >
-        Canvas
-      </canvas>
+      <Box sx={{ bgcolor: "primary.light" }}>
+        <canvas
+          id="canvas"
+          width={window.innerWidth}
+          height={window.innerHeight}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+        >
+          Canvas
+        </canvas>
+      </Box>
     </div>
   );
 };
