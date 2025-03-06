@@ -45,12 +45,12 @@ const nearPoint = (x, y, x1, y1, name) => {
 //first checks if the mouse is near any of the points of the rectangle and calls the nearpoint function
 //it also check if the mouse is inside the element
 
-const onLine = (x1, y1, x2, y2, x, y, distanceOffset = 5) => {
+const onLine = (x1, y1, x2, y2, x, y, maxDistance = 1) => {
   const a = { x: x1, y: y1 };
   const b = { x: x2, y: y2 };
   const c = { x, y };
   const offset = distance(a, b) - (distance(a, c) + distance(b, c));
-  return Math.abs(offset) < 5 ? "inside" : null; // To increase accuracy of selection on drawing points => increase offset value
+  return Math.abs(offset) < maxDistance ? "inside" : null; // To increase accuracy of selection on drawing points => increase offset value
 };
 
 //the else statement does the same but for a line - but checks if the mouse is at the start, end or anywhere along the line
@@ -76,12 +76,11 @@ const positionWithinElement = (x, y, element) => {
         if (!nextPoint) {
           return false;
         }
-        return onLine(point.x, point.y, nextPoint.x, nextPoint.y, x, y) != null; // If not null => return point value.
+        return (
+          onLine(point.x, point.y, nextPoint.x, nextPoint.y, x, y, 5) != null
+        );
       });
-
-      const onPath = betweenAnyPoint ? "inside" : null;
-
-      return onPath;
+      return betweenAnyPoint ? "inside" : null;
     default:
       throw new Error(`Invalid type: type not recognised: ${type}`);
   }
@@ -224,11 +223,7 @@ const drawElement = (roughCanvas, context, element) => {
     case "pencil":
       // Options params for the stroke (thickness etc.)
       const stroke = getSvgPathFromStroke(
-        getStroke(element.points, {
-          options: {
-            size: 20,
-          },
-        })
+        getStroke(element.points, { size: 4 })
       );
       context.fill(new Path2D(stroke)); // Keeping track of users draw path via SVG
       break;
@@ -284,16 +279,11 @@ const Canvas = () => {
   // x1, y1, x2, y2 are the new coordinates
   //type - line or square
   const updateElement = (id, x1, y1, x2, y2, type) => {
-    //calls the create element function with the new coordinates
     const elementsCopy = [...elements];
-
-    //sets the state with updated element
-    setElements(elementsCopy, true);
 
     switch (type) {
       case "line":
       case "rectangle":
-        //updates the element which has been selected by its id
         elementsCopy[id] = createElement(id, x1, y1, x2, y2, type);
         break;
       case "pencil":
@@ -305,6 +295,7 @@ const Canvas = () => {
       default:
         throw new Error(`Invalid type: type not recognised: ${type}`);
     }
+    setElements(elementsCopy, true);
   };
 
   const handleMouseMove = (event) => {
@@ -323,12 +314,27 @@ const Canvas = () => {
       const { x1, y1 } = elements[index];
       updateElement(index, x1, y1, x, y, tool);
     } else if (action === "moving") {
-      const { id, x1, x2, y1, y2, type, offsetX, offsetY } = selectedElement;
-      const width = x2 - x1;
-      const height = y2 - y1;
-      const nexX1 = x - offsetX;
-      const nexY1 = y - offsetY;
-      updateElement(id, nexX1, nexY1, nexX1 + width, nexY1 + height, type);
+      if (selectedElement.type === "pencil") {
+        const newPoints = selectedElement.points.map((_, index) => ({
+          x: x - selectedElement.xOffsets[index],
+          y: y - selectedElement.yOffsets[index],
+        }));
+
+        const elementsCopy = [...elements];
+        elementsCopy[selectedElement.id] = {
+          ...elementsCopy[selectedElement.id],
+          points: newPoints,
+        };
+
+        setElements(elementsCopy, true);
+      } else {
+        const { id, x1, x2, y1, y2, type, offsetX, offsetY } = selectedElement;
+        const width = x2 - x1;
+        const height = y2 - y1;
+        const nexX1 = x - offsetX;
+        const nexY1 = y - offsetY;
+        updateElement(id, nexX1, nexY1, nexX1 + width, nexY1 + height, type);
+      }
     } else if (action === "resizing") {
       const { id, type, position, ...coordinates } = selectedElement;
       const { x1, y1, x2, y2 } = resizedCoordinates(
@@ -365,9 +371,15 @@ const Canvas = () => {
     if (tool === "selection") {
       const element = getElementAtPosition(x, y, elements);
       if (element) {
-        const offsetX = x - element.x1;
-        const offsetY = y - element.y1;
-        setSelectedElement({ ...element, offsetX, offsetY });
+        if (element.type === "pencil") {
+          const xOffsets = element.points.map((point) => x - point.x);
+          const yOffsets = element.points.map((point) => y - point.y);
+          setSelectedElement({ ...element, xOffsets, yOffsets });
+        } else {
+          const offsetX = x - element.x1;
+          const offsetY = y - element.y1;
+          setSelectedElement({ ...element, offsetX, offsetY });
+        }
         setElements((prevState) => prevState);
         if (element.position === "inside") {
           setAction("moving");
