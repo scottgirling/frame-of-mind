@@ -303,10 +303,10 @@ const Canvas = () => {
   return (
     <>
       <ButtonGroup sx={{ mx: "auto", my: 2 }}>
-        <Button variant="outlined">
+        <Button variant="outlined" onClick={undo}>
           <ArrowArcLeft size={20} /> <Box sx={visuallyHidden}>Undo</Box>
         </Button>
-        <Button variant="outlined">
+        <Button variant="outlined" onClick={redo}>
           <ArrowArcRight size={20} /> <Box sx={visuallyHidden}>Redo</Box>
         </Button>
       </ButtonGroup>
