@@ -296,29 +296,30 @@ const Canvas = () => {
           variant={tool === "line" ? "contained" : "outlined"}
           onClick={() => setTool("line")}
         >
-          Line │
+          Line
         </Button>
         <Button
           variant={tool === "rectangle" ? "contained" : "outlined"}
           onClick={() => setTool("rectangle")}
         >
-          Rectangle ▉
+          Rectangle
         </Button>
-
-        <Button
-          variant={tool === "undo" ? "contained" : "outlined"}
-          onClick={undo}
-        >
-          Undo ↺
-        </Button>
-        <Button
-          variant={tool === "redo" ? "contained" : "outlined"}
-          onClick={redo}
-        >
-          Redo ↻
-        </Button>
+        {/* <Button onClick={undo}>Undo</Button>
+        <Button onClick={redo}>Redo</Button> */}
       </div>
 
+      <Box sx={{ bgcolor: "primary.light" }}>
+        <canvas
+          id="canvas"
+          width={window.innerWidth}
+          height={window.innerHeight}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+        >
+          Canvas
+        </canvas>
+      </Box>
       <Box sx={{ bgcolor: "primary.light" }}>
         <canvas
           id="canvas"
