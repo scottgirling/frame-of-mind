@@ -15,7 +15,7 @@ export default function Home() {
   const [pageLoading, setLoading] = useState(false);
 
   if (loading || pageLoading) {
-    return <CircularProgress />;
+    return <CircularProgress sx={{ mx: "auto" }} />;
   }
 
   if (authUser && Object.keys(authUser).length) {
