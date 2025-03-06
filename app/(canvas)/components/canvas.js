@@ -9,7 +9,6 @@ import {
 import { LineSegment } from "@phosphor-icons/react/dist/ssr";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import rough from "roughjs/bundled/rough.esm";
-import { useEffect } from "react";
 
 //rough.js tool for generating shapes
 const generator = rough.generator();
