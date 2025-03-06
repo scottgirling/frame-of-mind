@@ -283,7 +283,6 @@ const Canvas = () => {
     setAction("none");
     setSelectedElement(null);
   };
-
   return (
     <div>
       <div>
