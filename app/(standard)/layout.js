@@ -8,7 +8,17 @@ export default function StandardLayout({ children }) {
     <>
       <TopBar components={<Avatar sx={{ ml: "auto" }} />} />
       <Box component={"main"} sx={{ mx: "auto", mt: "1.25rem" }}>
-        <section>{children}</section>
+        <Box
+          component={"section"}
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            width: "100vw",
+            maxWidth: "1200px",
+          }}
+        >
+          {children}
+        </Box>
         <section>
           <Typography variant="h6" sx={{ mt: 5, mb: 1 }}>
             Go To:
