@@ -1,5 +1,12 @@
 import { db } from "@/lib/firebase";
-import { doc, query, getDocs, collection, where } from "firebase/firestore";
+import {
+  doc,
+  query,
+  getDocs,
+  collection,
+  where,
+  orderBy,
+} from "firebase/firestore";
 
 export default async function fetchExistingComics(
   uid,
@@ -13,7 +20,9 @@ export default async function fetchExistingComics(
     collection(db, "comics"),
     where("createdBy", "==", userRef),
     where("isSolo", "==", isSolo),
-    where("isCompleted", "==", false).orderBy("createdAt", "asc")
+    where("isCompleted", "==", false),
+    where("isInProgress", "==", false),
+    orderBy("createdAt", "asc")
   );
   const querySnapshot = await getDocs(q);
   const existingComics = querySnapshot.docs.map((doc) => ({

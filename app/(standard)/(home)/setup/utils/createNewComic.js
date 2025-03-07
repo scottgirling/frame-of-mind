@@ -14,6 +14,7 @@ export default async function createNewComic(uid, isSolo) {
     isCompleted: false,
     isPublic: false,
     isSolo: isSolo,
+    isInProgress: true,
     panels: [],
   });
   console.log(result.id, "<-- this is the new comic id");

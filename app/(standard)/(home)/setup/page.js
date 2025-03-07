@@ -1,8 +1,14 @@
 "use client";
 
 import { auth } from "@/lib/firebase";
-import { Box, Button, CircularProgress, Switch } from "@mui/material";
-import { useState } from "react";
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Switch,
+  Typography,
+} from "@mui/material";
+import { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -17,6 +23,10 @@ export default function CreateComicPage() {
   const [isSolo, setIsSolo] = useState(true);
   const [showExistingComics, setShowExistingComics] = useState(false);
   const [existingComics, setExistingComics] = useState([]);
+
+  // useEffect(() => {
+  //   console.log(existingComics.length);
+  // }, [existingComics]);
 
   return (
     <Box component={"section"}>
@@ -49,9 +59,23 @@ export default function CreateComicPage() {
         </Button>
         <Button
           variant="contained"
-          onClick={() => {
-            createNewComic(authUser.uid, isSolo);
-            router.push("/create");
+          onClick={async () => {
+            await fetchExistingComics(
+              authUser.uid,
+              setExistingComics,
+              setLoading,
+              isSolo
+            );
+
+            if (!isSolo || (existingComics.length < 3 && isSolo)) {
+              createNewComic(authUser.uid, isSolo);
+              router.push("/create");
+            } else {
+              <Typography variant="body1">
+                You have reached your new comic limit. Please complete one of
+                your existing comics before starting a new one!
+              </Typography>;
+            }
           }}
         >
           New comic
@@ -62,7 +86,7 @@ export default function CreateComicPage() {
         {!loading && showExistingComics && (
           <div>
             {existingComics.length === 0 ? (
-              <p>No existing comics found</p>
+              <Typography variant="body1">No existing comics found</Typography>
             ) : (
               existingComics.map((comic) => {
                 return (
