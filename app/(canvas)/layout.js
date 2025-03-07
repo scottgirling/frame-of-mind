@@ -1,6 +1,5 @@
-import { Box, Button } from "@mui/material";
-import TopBar from "../components/TopBar";
-import Avatar from "../components/Avatar";
+"use client";
+import { Box } from "@mui/material";
 
 export default function CanvasLayout({ children }) {
   return (
@@ -12,28 +11,7 @@ export default function CanvasLayout({ children }) {
         flexDirection: "column",
       }}
     >
-      <TopBar
-        components={
-          <>
-            <Button sx={{ ml: "auto", mr: 2 }} variant="contained">
-              Submit
-            </Button>
-            <Avatar />
-          </>
-        }
-      />
-      <Box
-        component={"main"}
-        sx={{
-          mt: "1.25rem",
-          display: "flex",
-          flexDirection: "column",
-          flexGrow: 1,
-          maxHeight: "100%",
-        }}
-      >
-        {children}
-      </Box>
+      {children}
     </Box>
   );
 }
