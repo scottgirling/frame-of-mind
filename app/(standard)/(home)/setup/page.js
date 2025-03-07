@@ -28,7 +28,6 @@ export default function CreateComicPage() {
   const [authUser] = useAuthState(auth);
   const [loading, setLoading] = useState(false);
   const [isSolo, setIsSolo] = useState(true);
-  const [isNewComic, setIsNewComic] = useState(false);
   const [showExistingComics, setShowExistingComics] = useState(false);
   const [existingComics, setExistingComics] = useState([]);
   const [error, setError] = useState(null);
@@ -37,7 +36,7 @@ export default function CreateComicPage() {
   const [selectedComic, setSelectedComic] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
 
-  // Fetch the panel in progress
+  // Fetch the panels in progress + existing comics
   useEffect(() => {
     if (authUser) {
       fetchInProgressPanels(
@@ -56,62 +55,24 @@ export default function CreateComicPage() {
     }
   }, [authUser, isSolo]);
 
-  // useEffect(() => {
-  //   setLoading(true);
-  //   fetchExistingComics(authUser.uid, setExistingComics, setLoading, isSolo)
-  //     .then(() => {
-  //       if (isNewComic) {
-  //         const comicsCreatedInLast24Hours =
-  //           filterYesterdaysComics(existingComics);
-  //         console.log(comicsCreatedInLast24Hours);
-  //         if (
-  //           (!isSolo && !comicsCreatedInLast24Hours.length) ||
-  //           (isSolo && existingComics.length < 3)
-  //         ) {
-  //           createNewComic(authUser.uid, isSolo);
-  //           router.push("/create");
-  //         } else {
-  //           isSolo
-  //             ? setError(
-  //                 "You have reached your new comic limit. Please complete one of your existing comics before starting a new one!"
-  //               )
-  //             : setError(
-  //                 "You have reached your daily new comic limit. You can only create one new team comic each day. Please contribute to an existing team comic or go solo!"
-  //               );
-  //         }
-  //       } else {
-  //         if (isSolo && existingComics.length) {
-  //           setShowExistingComics(true);
-  //         } else if (!isSolo && existingComics.length) {
-  //           const oldestComic = existingComics[0];
-  //           const oldestComicId = oldestComic.id;
-  //           addPanelToComic(authUser.uid, oldestComicId);
-  //           router.push("/create");
-  //         }
-  //       }
-  //     })
-  //     .finally(() => {
-  //       setLoading(false);
-  //     });
-  // }, [existingComics, isSolo]);
-
   const handleDialogClose = () => {
     setOpenDialog(false);
     setSelectedComic(null);
   };
 
   async function handleContinueExistingClick() {
-    if (isSolo && panelInProgressId) {
+    if (!selectedComic) return;
+
+    if (panelInProgressId) {
       setOpenDialog(true);
-    } else if (!isSolo) {
-      addPanelToComic(authUser.uid, selectedComic.id);
+    } else {
+      await addPanelToComic(authUser.uid, selectedComic.id, isSolo);
       router.push("/create");
     }
   }
 
   async function handleNewComicClick() {
     if (authUser) {
-      setIsNewComic(true);
       await fetchExistingComics(
         authUser.uid,
         setExistingComics,
@@ -126,7 +87,7 @@ export default function CreateComicPage() {
           "You have reached your solo comic limit. Please complete one of your existing comics before starting a new one!"
         );
       } else {
-        createNewComic(authUser.uid, isSolo);
+        await createNewComic(authUser.uid, isSolo);
         router.push("/create");
       }
     } else {
@@ -134,7 +95,7 @@ export default function CreateComicPage() {
       if (comicsCreatedInLast24Hours.length > 0) {
         setError("You can only create one team comic every 24 hours.");
       } else {
-        createNewComic(authUser.uid, isSolo);
+        await createNewComic(authUser.uid, isSolo);
         router.push("/create");
       }
     }
@@ -143,17 +104,18 @@ export default function CreateComicPage() {
   function handleContinueDrawing() {
     // Continue drawing on the selected comic
     if (selectedComic && panelInProgressId) {
-      addPanelToComic(authUser.uid, selectedComic.id);
+      addPanelToComic(authUser.uid, selectedComic.id, isSolo);
       router.push("/create");
       setOpenDialog(false);
     }
   }
 
+  // Discard the in-progress panel and delete it via util
   function handleDiscardPanel() {
-    // Discard the in-progress panel and delete it
     if (selectedComic && panelInProgressId) {
       deletePanel(authUser.uid, selectedComic.id, panelInProgressId)
         .then(() => {
+          setPanelInProgressId(null);
           setOpenDialog(false);
         })
         .catch((error) => console.error("Error deleting panel:", error));
@@ -183,16 +145,17 @@ export default function CreateComicPage() {
       <Box>
         {loading && <CircularProgress />}
         {error && <p>{error}</p>}
-        {isPanelInProgress && <p>Panel in progress</p>}
         {!loading && showExistingComics && (
           <div>
             {existingComics.length === 0 ? (
-              <Typography variant="body1">No existing comics found</Typography>
+              <Typography variant="body1">
+                No existing comics found. Start a new one by clicking the new
+                comic button above!
+              </Typography>
             ) : (
               existingComics.map((comic) => {
                 return (
                   <div key={comic.id}>
-                    {console.log(comic)}
                     <Link
                       href={"/create"}
                       onClick={() => {
@@ -213,8 +176,8 @@ export default function CreateComicPage() {
         <DialogTitle>Panel In Progress</DialogTitle>
         <DialogContent>
           <Typography variant="body1">
-            You have a panel in progress. Do you want to continue with it or
-            discard it?
+            You have a panel in progress. Do you want to continue drawing this
+            panel or discard it?
           </Typography>
         </DialogContent>
         <DialogActions>

@@ -8,7 +8,7 @@ export default async function createNewComic(uid, isSolo) {
   const { result } = await addDataWithAutoID("comics", {
     comicLikes: 0,
     comicTheme: "", // Link to random word API
-    completedAt: "",
+    completedAt: null,
     createdAt: serverTimestamp(),
     createdBy: userRef,
     isCompleted: false,
@@ -19,5 +19,5 @@ export default async function createNewComic(uid, isSolo) {
   });
   console.log(result.id, "<-- this is the new comic id");
 
-  await addPanelToComic(uid, result.id);
+  await addPanelToComic(uid, result.id, isSolo);
 }

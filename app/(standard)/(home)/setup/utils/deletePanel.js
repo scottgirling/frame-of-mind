@@ -11,7 +11,7 @@ export default async function deletePanel(uid, comicId, panelId) {
     // 2. Delete panel from panels array in the comics doc
     const comicRef = doc(db, "comics", comicId);
     await updateDoc(comicRef, {
-      panels: arrayRemove(panelId),
+      panels: arrayRemove(panelRef),
     });
     console.log(
       `Panel ${panelId} removed from panels array in comic ${comicId}.`

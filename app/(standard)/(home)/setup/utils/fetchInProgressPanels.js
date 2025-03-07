@@ -11,7 +11,7 @@ export default async function fetchInProgressPanels(
   const userRef = doc(db, "users", uid);
   const q = query(
     collection(db, "panels"),
-    where("createdBy", "==", userRef),
+    where("userRef", "==", userRef),
     where("isSolo", "==", isSolo),
     where("isInProgress", "==", true)
   );
@@ -20,7 +20,7 @@ export default async function fetchInProgressPanels(
     id: doc.id,
     ...doc.data(),
   }));
-  console.log(panels);
+  console.log(panels, "<-- in progress panels");
 
   if (panels.length) await setIsPanelInProgress(true);
   setLoading(false);
