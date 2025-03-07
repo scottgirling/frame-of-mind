@@ -25,11 +25,11 @@ export default async function fetchExistingComics(
     orderBy("createdAt", "asc")
   );
   const querySnapshot = await getDocs(q);
-  const existingComics = querySnapshot.docs.map((doc) => ({
+  const comics = querySnapshot.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
   }));
 
-  await setExistingComics(existingComics);
+  await setExistingComics(comics);
   setLoading(false);
 }
