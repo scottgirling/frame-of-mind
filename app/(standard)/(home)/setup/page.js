@@ -8,7 +8,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import createNewComic from "./utils/createNewComic";
 import addPanelToComic from "./utils/addPanelToComic";
-import fetchExistingSoloComics from "./utils/fetchExistingSoloComics";
+import fetchExistingComics from "./utils/fetchExistingComics";
 
 export default function CreateComicPage() {
   const router = useRouter();
@@ -16,11 +16,11 @@ export default function CreateComicPage() {
   const [loading, setLoading] = useState(false);
   const [isSolo, setIsSolo] = useState(true);
   const [showExistingComics, setShowExistingComics] = useState(false);
-  const [existingSoloComics, setExistingSoloComics] = useState([]);
+  const [existingComics, setExistingComics] = useState([]);
 
   return (
     <Box component={"section"}>
-      <p>Choose your game-play modes below!</p>
+      <p>Choose your gameplay modes below!</p>
       <Box>
         Solo
         <Switch
@@ -36,10 +36,11 @@ export default function CreateComicPage() {
           onClick={() => {
             if (authUser) {
               setShowExistingComics(true);
-              fetchExistingSoloComics(
+              fetchExistingComics(
                 authUser.uid,
-                setExistingSoloComics,
-                setLoading
+                setExistingComics,
+                setLoading,
+                isSolo
               );
             }
           }}
@@ -49,7 +50,7 @@ export default function CreateComicPage() {
         <Button
           variant="contained"
           onClick={() => {
-            createNewComic(authUser.uid);
+            createNewComic(authUser.uid, isSolo);
             router.push("/create");
           }}
         >
@@ -60,10 +61,10 @@ export default function CreateComicPage() {
         {loading && <CircularProgress />}
         {!loading && showExistingComics && (
           <div>
-            {existingSoloComics.length === 0 ? (
+            {existingComics.length === 0 ? (
               <p>No existing comics found</p>
             ) : (
-              existingSoloComics.map((comic) => {
+              existingComics.map((comic) => {
                 return (
                   <div key={comic.id}>
                     {console.log(comic)}

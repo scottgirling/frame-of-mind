@@ -3,7 +3,7 @@ import { db } from "@/lib/firebase";
 import { doc, serverTimestamp } from "firebase/firestore";
 import addPanelToComic from "./addPanelToComic";
 
-export default async function createNewComic(uid) {
+export default async function createNewComic(uid, isSolo) {
   const userRef = doc(db, "users", uid);
   const { result } = await addDataWithAutoID("comics", {
     comicLikes: 0,
@@ -13,7 +13,7 @@ export default async function createNewComic(uid) {
     createdBy: userRef,
     isCompleted: false,
     isPublic: false,
-    isSolo: true,
+    isSolo: isSolo,
     panels: [],
   });
   console.log(result.id, "<-- this is the new comic id");

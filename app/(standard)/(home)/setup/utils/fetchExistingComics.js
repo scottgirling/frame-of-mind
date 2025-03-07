@@ -1,25 +1,26 @@
 import { db } from "@/lib/firebase";
 import { doc, query, getDocs, collection, where } from "firebase/firestore";
 
-export default async function fetchExistingSoloComics(
+export default async function fetchExistingComics(
   uid,
-  setExistingSoloComics,
-  setLoading
+  setExistingComics,
+  setLoading,
+  isSolo
 ) {
   setLoading(true);
   const userRef = doc(db, "users", uid);
   const q = query(
     collection(db, "comics"),
     where("createdBy", "==", userRef),
-    where("isSolo", "==", true),
-    where("isCompleted", "==", false)
+    where("isSolo", "==", isSolo),
+    where("isCompleted", "==", false).orderBy("createdAt", "asc")
   );
   const querySnapshot = await getDocs(q);
-  const existingSoloComics = querySnapshot.docs.map((doc) => ({
+  const existingComics = querySnapshot.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
   }));
-  // console.log(existingSoloComics);
-  setExistingSoloComics(existingSoloComics);
+  console.log(existingComics);
+  setExistingComics(existingComics);
   setLoading(false);
 }
