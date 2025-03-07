@@ -29,7 +29,7 @@ export default async function fetchExistingComics(
     id: doc.id,
     ...doc.data(),
   }));
-  console.log(existingComics);
-  setExistingComics(existingComics);
+
+  await setExistingComics(existingComics);
   setLoading(false);
 }
