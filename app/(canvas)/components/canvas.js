@@ -6,8 +6,10 @@ import {
   BoundingBox,
   Cursor,
   Pencil,
+  TextAa,
 } from "@phosphor-icons/react";
 import { LineSegment } from "@phosphor-icons/react/dist/ssr";
+
 import next from "next";
 import getStroke from "perfect-freehand";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
@@ -28,6 +30,8 @@ const createElement = (id, x1, y1, x2, y2, type) => {
       return { id, x1, y1, x2, y2, type, roughElement };
     case "pencil":
       return { id, type, points: [{ x: x1, y: y1 }] };
+    case "text":
+      return { id, type, x1, y1, text: "" };
 
     default: // If type isn't a specified case => throw err
       throw new Error(`Invalid type: type not recognised: ${type}`);
@@ -227,7 +231,10 @@ const drawElement = (roughCanvas, context, element) => {
       );
       context.fill(new Path2D(stroke)); // Keeping track of users draw path via SVG
       break;
-
+    case "text":
+      context.font = "48px serif";
+      context.fillText(element.text, element.x1, element.y1);
+      break;
     default:
       throw new Error(`Invalid type: type not recognised: ${element.type}`);
   }
@@ -241,6 +248,7 @@ const Canvas = () => {
   const [action, setAction] = useState("none");
   const [tool, setTool] = useState("line");
   const [selectedElement, setSelectedElement] = useState(null);
+  const textAreaRef = useRef();
 
   //used LayoutEffect is called after component is fully rendered to ensure the DOM is updated before performing drawing actions
   useLayoutEffect(() => {
@@ -274,11 +282,18 @@ const Canvas = () => {
     };
   }, [undo, redo]);
 
+  useEffect(() => {
+    const textArea = textAreaRef.current;
+    if (action === "writing") {
+      textArea.focus();
+    }
+  }, [action, selectedElement]);
+
   //used to update the elemetents coordinates when one is moved or resized and then sets it back into state
   //id is the identifer of the element
   // x1, y1, x2, y2 are the new coordinates
   //type - line or square
-  const updateElement = (id, x1, y1, x2, y2, type) => {
+  const updateElement = (id, x1, y1, x2, y2, type, options) => {
     const elementsCopy = [...elements];
 
     switch (type) {
@@ -291,6 +306,9 @@ const Canvas = () => {
           ...elementsCopy[id].points,
           { x: x2, y: y2 },
         ];
+        break;
+      case "text":
+        elementsCopy[id].text = options.text;
         break;
       default:
         throw new Error(`Invalid type: type not recognised: ${type}`);
@@ -348,6 +366,7 @@ const Canvas = () => {
   };
   const handleMouseUp = () => {
     if (selectedElement) {
+      if (action === "writing") return;
       const index = selectedElement.id;
       const { id, type } = elements[index];
       if (
@@ -365,6 +384,7 @@ const Canvas = () => {
 
   const handleMouseDown = (event) => {
     // const { clientX, clientY } = event;
+    if (action === "writing") return;
     const rect = event.target.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
@@ -392,10 +412,16 @@ const Canvas = () => {
       const element = createElement(id, x, y, x, y, tool);
       setElements((prevState) => [...prevState, element]);
       setSelectedElement(element);
-      setAction("drawing");
+      setAction(tool === "text" ? "writing" : "drawing");
     }
   };
 
+  const handleBlur = (event) => {
+    const { id, x1, y1, type } = selectedElement;
+    setAction("none");
+    setSelectedElement(null);
+    updateElement(id, x1, y1, null, null, type, { text: event.target.value });
+  };
   // set canvas size
 
   const refCanvasContainer = useRef(null);
@@ -427,6 +453,17 @@ const Canvas = () => {
           borderRadius: 2,
         }}
       >
+        {action === "writing" ? (
+          <textarea
+            ref={textAreaRef}
+            onBlur={handleBlur}
+            style={{
+              position: "fixed",
+              top: selectedElement.y1,
+              left: selectedElement.x1,
+            }}
+          />
+        ) : null}
         <canvas
           id="canvas"
           height={size}
@@ -458,6 +495,13 @@ const Canvas = () => {
         >
           <BoundingBox size={20} />{" "}
           <Box sx={visuallyHidden}>Rectangle Tool</Box>
+        </Button>
+
+        <Button
+          variant={tool === "text" ? "contained" : "outlined"}
+          onClick={() => setTool("text")}
+        >
+          <TextAa size={20} /> <Box sx={visuallyHidden}>Text</Box>
         </Button>
 
         <Button
