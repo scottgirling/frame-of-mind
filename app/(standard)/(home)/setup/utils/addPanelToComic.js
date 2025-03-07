@@ -1,0 +1,21 @@
+import { addDataWithAutoID } from "@/app/firestore/addData";
+import { db } from "@/lib/firebase";
+import { doc, updateDoc, arrayUnion } from "firebase/firestore";
+
+export default async function addPanelToComic(uid, comicId) {
+  const comicRef = doc(db, "comics", comicId);
+  const userRef = doc(db, "users", uid);
+  const { result } = await addDataWithAutoID("panels", {
+    audio: "",
+    comicRef: comicRef,
+    panelCaption: "",
+    rawDrawingData: "",
+    userRef: userRef,
+  });
+  console.log(result.id, "<-- this is the new panel id");
+
+  const panelRef = doc(db, "panels", result.id);
+  await updateDoc(comicRef, {
+    panels: arrayUnion(panelRef),
+  });
+}
