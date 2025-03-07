@@ -1,6 +1,6 @@
 "use client";
 
-import { auth, db } from "@/lib/firebase";
+import { auth } from "@/lib/firebase";
 import {
   Box,
   Button,
@@ -22,111 +22,126 @@ import fetchExistingComics from "./utils/fetchExistingComics";
 import fetchInProgressPanels from "./utils/fetchInProgressPanels";
 import filterYesterdaysComics from "./utils/filterYesterdaysComics";
 import deletePanel from "./utils/deletePanel";
-import { doc } from "@firebase/firestore";
 
 export default function CreateComicPage() {
   const router = useRouter();
   const [authUser] = useAuthState(auth);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [isSolo, setIsSolo] = useState(true);
   const [showExistingComics, setShowExistingComics] = useState(false);
   const [existingComics, setExistingComics] = useState([]);
-  const [error, setError] = useState(null);
   const [panelsInProgress, setPanelsInProgress] = useState([]);
   const [selectedComic, setSelectedComic] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
+
+  // When switching modes, ensure existing comics is hidden
+  useEffect(() => {
+    setShowExistingComics(false);
+    setError(null);
+  }, [isSolo]);
 
   // Fetch the panels in progress + existing comics
   useEffect(() => {
     if (authUser) {
       setLoading(true);
-      fetchInProgressPanels(authUser.uid, setLoading, isSolo).then((panels) => {
-        setPanelsInProgress(panels);
-      });
-      fetchExistingComics(authUser.uid, isSolo).then((comics) => {
-        setExistingComics(comics);
-        setLoading(false);
-      });
+      Promise.all([
+        fetchInProgressPanels(authUser.uid, isSolo),
+        fetchExistingComics(authUser.uid, isSolo),
+      ])
+        .then(([panels, comics]) => {
+          setPanelsInProgress(panels);
+          setExistingComics(comics);
+        })
+        .finally(() => setLoading(false));
     }
   }, [authUser, isSolo]);
 
+  // Dialog close via 'cancel'
   const handleDialogClose = () => {
     setOpenDialog(false);
     setSelectedComic(null);
   };
 
-  async function handleContinueExistingClick() {
+  async function handleContinueExistingClick(comic) {
+    if (!comic) return;
+    setLoading(true);
+
     if (isSolo) {
-      setShowExistingComics(true);
-      if (!selectedComic) return;
-
-      const panelForComic = panelsInProgress.find((panel) => {
-        const comicRef = doc(db, "comics", selectedComic.id);
-        return panel.comicRef === comicRef;
-      });
-
+      // Solo mode: continue with the user-selected comic
+      setSelectedComic(comic);
+      const panelForComic = panelsInProgress.find(
+        (panel) => panel.comicRef.id === comic.id
+      );
       if (panelForComic) {
         setOpenDialog(true);
+        setLoading(false);
       } else {
-        await addPanelToComic(authUser.uid, selectedComic.id, isSolo);
+        // If no solo panel in progress, then add panel to comic
+        await addPanelToComic(authUser.uid, comic.id, isSolo);
         router.push("/create");
       }
     } else {
-      // Team mode logic
-      if (existingComics.length === 0) {
-        setError("No existing comics found.");
-        return;
-      }
-      const oldestComic = existingComics[0];
-      const panelForComic = panelsInProgress.find((panel) => {
-        const comicRef = doc(db, "comics", oldestComic.id);
-        return panel.comicRef === comicRef;
-      });
-      if (panelForComic) {
-        // Set the oldest comic as selected
-        setSelectedComic(oldestComic);
+      // Team mode:
+      // First check if any team panel is already in progress.
+      if (panelsInProgress.length > 0) {
+        const teamPanelInProgress = panelsInProgress[0];
+        setSelectedComic({ id: teamPanelInProgress.comicRef.id });
         setOpenDialog(true);
+        setLoading(false);
       } else {
-        await addPanelToComic(authUser.uid, oldestComic.id, isSolo);
+        // If no team panel in progress, then add panel to comic
+        setSelectedComic(comic);
+        await addPanelToComic(authUser.uid, comic.id, isSolo);
         router.push("/create");
       }
     }
   }
 
   async function handleNewComicClick() {
-    if (authUser) {
-      fetchExistingComics(authUser.uid, isSolo).then((comics) => {
-        setExistingComics(comics);
-      });
-    }
+    if (!authUser) return;
+    setLoading(true);
 
+    const comics = await fetchExistingComics(authUser.uid, isSolo);
+    setExistingComics(comics);
+
+    // Solo mode: check against solo comic limit of 5
     if (isSolo) {
-      if (existingComics.length >= 5) {
+      if (comics.length >= 5) {
         setError(
           "You have reached your solo comic limit. Please complete one of your existing comics before starting a new one!"
         );
-      } else {
-        await createNewComic(authUser.uid, isSolo);
-        router.push("/create");
+        setLoading(false);
+        return;
       }
     } else {
-      // Team mode logic
-      const comicsCreatedInLast24Hours = filterYesterdaysComics(existingComics);
-      if (comicsCreatedInLast24Hours.length > 0) {
+      // Team mode:
+      // First check if any team panel is already in progress.
+      if (panelsInProgress.length) {
+        const teamPanelInProgress = panelsInProgress[0];
+        setSelectedComic({ id: teamPanelInProgress.comicRef.id });
+        setOpenDialog(true);
+        setLoading(false);
+        return;
+      }
+      // If no panel in progress, enforce 24h cooling off period
+      const comicsCreatedInLast24Hours = filterYesterdaysComics(comics);
+      if (comicsCreatedInLast24Hours.length) {
         setError("You can only create one team comic every 24 hours.");
-      } else {
-        await createNewComic(authUser.uid, isSolo);
-        router.push("/create");
+        setLoading(false);
+        return;
       }
     }
+    // If no panels in progress and within limit then create new
+    await createNewComic(authUser.uid, isSolo);
+    router.push("/create");
   }
 
+  // Dialog: Continue drawing on the selected comic
   function handleContinueDrawing() {
-    // Continue drawing on the selected comic
     if (selectedComic) {
       const panelForComic = panelsInProgress.find((panel) => {
-        const comicRef = doc(db, "comics", selectedComic.id);
-        panel.comicRef === comicRef;
+        return panel.comicRef.id === selectedComic.id;
       });
       if (panelForComic) {
         router.push("/create");
@@ -135,22 +150,23 @@ export default function CreateComicPage() {
     }
   }
 
-  // Discard the in-progress panel and delete it via util
-  function handleDiscardPanel() {
-    if (selectedComic) {
-      const panelForComic = panelsInProgress.find((panel) => {
-        const comicRef = doc(db, "comics", selectedComic.id);
-        panel.comicRef === comicRef;
-      });
-      if (panelForComic) {
-        deletePanel(authUser.uid, selectedComic.id, panelForComic.id)
-          .then(() => {
-            setPanelsInProgress((prev) =>
-              prev.filter((panel) => panel.id !== panelForComic.id)
-            );
-            setOpenDialog(false);
-          })
-          .catch((error) => console.error("Error deleting panel:", error));
+  //  Dialog: Discard and delete the in-progress panel
+  async function handleDiscardPanel() {
+    if (!selectedComic) return;
+
+    const panelForComic = panelsInProgress.find((panel) => {
+      return panel.comicRef.id === selectedComic.id;
+    });
+    if (panelForComic) {
+      try {
+        await deletePanel(authUser.uid, selectedComic.id, panelForComic.id);
+
+        setPanelsInProgress((prev) =>
+          prev.filter((panel) => panel.id !== panelForComic.id)
+        );
+        setOpenDialog(false);
+      } catch (error) {
+        console.error("Error deleting panel:", error);
       }
     }
   }
@@ -168,10 +184,29 @@ export default function CreateComicPage() {
         Team
       </Box>
       <Box>
-        <Button variant="contained" onClick={handleContinueExistingClick}>
+        <Button
+          variant="contained"
+          sx={{ ml: 1, mr: 1 }}
+          onClick={() => {
+            if (isSolo) {
+              setShowExistingComics(true);
+            } else {
+              // In team mode, use oldest comic
+              if (existingComics.length === 0) {
+                setError("No existing comics found.");
+                return;
+              }
+              handleContinueExistingClick(existingComics[0]);
+            }
+          }}
+        >
           Continue existing comic
         </Button>
-        <Button variant="contained" onClick={handleNewComicClick}>
+        <Button
+          variant="contained"
+          sx={{ ml: 1, mr: 1 }}
+          onClick={handleNewComicClick}
+        >
           New comic
         </Button>
       </Box>
@@ -189,14 +224,15 @@ export default function CreateComicPage() {
               existingComics.map((comic) => {
                 return (
                   <div key={comic.id}>
-                    <Link
-                      href={"/create"}
-                      onClick={() => {
-                        setSelectedComic(comic);
-                        handleContinueExistingClick();
-                      }}
-                    >
-                      <p>{comic.comicTheme}</p>
+                    <Link href="/create" passHref>
+                      <Button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleContinueExistingClick(comic);
+                        }}
+                      >
+                        {comic.comicTheme}
+                      </Button>
                     </Link>
                   </div>
                 );
@@ -209,8 +245,8 @@ export default function CreateComicPage() {
         <DialogTitle>Panel In Progress</DialogTitle>
         <DialogContent>
           <Typography variant="body1">
-            You have a panel in progress. Do you want to continue drawing this
-            panel or discard it?
+            You already have a panel in progress. Do you want to continue
+            drawing or discard it?
           </Typography>
         </DialogContent>
         <DialogActions>
