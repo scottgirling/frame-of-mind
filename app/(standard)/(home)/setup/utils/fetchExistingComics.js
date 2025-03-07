@@ -8,13 +8,7 @@ import {
   orderBy,
 } from "firebase/firestore";
 
-export default async function fetchExistingComics(
-  uid,
-  setExistingComics,
-  setLoading,
-  isSolo
-) {
-  setLoading(true);
+export default async function fetchExistingComics(uid, isSolo) {
   const userRef = doc(db, "users", uid);
   const q = query(
     collection(db, "comics"),
@@ -30,6 +24,5 @@ export default async function fetchExistingComics(
     ...doc.data(),
   }));
 
-  await setExistingComics(comics);
-  setLoading(false);
+  return comics;
 }

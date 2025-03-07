@@ -1,6 +1,6 @@
 "use client";
 
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import {
   Box,
   Button,
@@ -22,6 +22,7 @@ import fetchExistingComics from "./utils/fetchExistingComics";
 import fetchInProgressPanels from "./utils/fetchInProgressPanels";
 import filterYesterdaysComics from "./utils/filterYesterdaysComics";
 import deletePanel from "./utils/deletePanel";
+import { doc } from "@firebase/firestore";
 
 export default function CreateComicPage() {
   const router = useRouter();
@@ -31,27 +32,21 @@ export default function CreateComicPage() {
   const [showExistingComics, setShowExistingComics] = useState(false);
   const [existingComics, setExistingComics] = useState([]);
   const [error, setError] = useState(null);
-  const [isPanelInProgress, setIsPanelInProgress] = useState(false);
-  const [panelInProgressId, setPanelInProgressId] = useState(null);
+  const [panelsInProgress, setPanelsInProgress] = useState([]);
   const [selectedComic, setSelectedComic] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
 
   // Fetch the panels in progress + existing comics
   useEffect(() => {
     if (authUser) {
-      fetchInProgressPanels(
-        authUser.uid,
-        setIsPanelInProgress,
-        setLoading,
-        isSolo
-      ).then((panels) => {
-        if (panels.length) {
-          setPanelInProgressId(panels[0].id);
-        } else {
-          setPanelInProgressId(null);
-        }
+      setLoading(true);
+      fetchInProgressPanels(authUser.uid, setLoading, isSolo).then((panels) => {
+        setPanelsInProgress(panels);
       });
-      fetchExistingComics(authUser.uid, setExistingComics, setLoading, isSolo);
+      fetchExistingComics(authUser.uid, isSolo).then((comics) => {
+        setExistingComics(comics);
+        setLoading(false);
+      });
     }
   }, [authUser, isSolo]);
 
@@ -61,24 +56,48 @@ export default function CreateComicPage() {
   };
 
   async function handleContinueExistingClick() {
-    if (!selectedComic) return;
+    if (isSolo) {
+      setShowExistingComics(true);
+      if (!selectedComic) return;
 
-    if (panelInProgressId) {
-      setOpenDialog(true);
+      const panelForComic = panelsInProgress.find((panel) => {
+        const comicRef = doc(db, "comics", selectedComic.id);
+        return panel.comicRef === comicRef;
+      });
+
+      if (panelForComic) {
+        setOpenDialog(true);
+      } else {
+        await addPanelToComic(authUser.uid, selectedComic.id, isSolo);
+        router.push("/create");
+      }
     } else {
-      await addPanelToComic(authUser.uid, selectedComic.id, isSolo);
-      router.push("/create");
+      // Team mode logic
+      if (existingComics.length === 0) {
+        setError("No existing comics found.");
+        return;
+      }
+      const oldestComic = existingComics[0];
+      const panelForComic = panelsInProgress.find((panel) => {
+        const comicRef = doc(db, "comics", oldestComic.id);
+        return panel.comicRef === comicRef;
+      });
+      if (panelForComic) {
+        // Set the oldest comic as selected
+        setSelectedComic(oldestComic);
+        setOpenDialog(true);
+      } else {
+        await addPanelToComic(authUser.uid, oldestComic.id, isSolo);
+        router.push("/create");
+      }
     }
   }
 
   async function handleNewComicClick() {
     if (authUser) {
-      await fetchExistingComics(
-        authUser.uid,
-        setExistingComics,
-        setLoading,
-        isSolo
-      );
+      fetchExistingComics(authUser.uid, isSolo).then((comics) => {
+        setExistingComics(comics);
+      });
     }
 
     if (isSolo) {
@@ -91,6 +110,7 @@ export default function CreateComicPage() {
         router.push("/create");
       }
     } else {
+      // Team mode logic
       const comicsCreatedInLast24Hours = filterYesterdaysComics(existingComics);
       if (comicsCreatedInLast24Hours.length > 0) {
         setError("You can only create one team comic every 24 hours.");
@@ -103,22 +123,35 @@ export default function CreateComicPage() {
 
   function handleContinueDrawing() {
     // Continue drawing on the selected comic
-    if (selectedComic && panelInProgressId) {
-      addPanelToComic(authUser.uid, selectedComic.id, isSolo);
-      router.push("/create");
+    if (selectedComic) {
+      const panelForComic = panelsInProgress.find((panel) => {
+        const comicRef = doc(db, "comics", selectedComic.id);
+        panel.comicRef === comicRef;
+      });
+      if (panelForComic) {
+        router.push("/create");
+      }
       setOpenDialog(false);
     }
   }
 
   // Discard the in-progress panel and delete it via util
   function handleDiscardPanel() {
-    if (selectedComic && panelInProgressId) {
-      deletePanel(authUser.uid, selectedComic.id, panelInProgressId)
-        .then(() => {
-          setPanelInProgressId(null);
-          setOpenDialog(false);
-        })
-        .catch((error) => console.error("Error deleting panel:", error));
+    if (selectedComic) {
+      const panelForComic = panelsInProgress.find((panel) => {
+        const comicRef = doc(db, "comics", selectedComic.id);
+        panel.comicRef === comicRef;
+      });
+      if (panelForComic) {
+        deletePanel(authUser.uid, selectedComic.id, panelForComic.id)
+          .then(() => {
+            setPanelsInProgress((prev) =>
+              prev.filter((panel) => panel.id !== panelForComic.id)
+            );
+            setOpenDialog(false);
+          })
+          .catch((error) => console.error("Error deleting panel:", error));
+      }
     }
   }
 
@@ -145,7 +178,7 @@ export default function CreateComicPage() {
       <Box>
         {loading && <CircularProgress />}
         {error && <p>{error}</p>}
-        {!loading && showExistingComics && (
+        {!loading && showExistingComics && isSolo && (
           <div>
             {existingComics.length === 0 ? (
               <Typography variant="body1">

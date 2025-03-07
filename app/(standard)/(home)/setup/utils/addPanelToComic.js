@@ -24,6 +24,7 @@ export default async function addPanelToComic(uid, comicId, isSolo) {
 
   const panelRef = doc(db, "panels", result.id);
   await updateDoc(comicRef, {
+    isInProgress: true,
     panels: arrayUnion(panelRef),
   });
 }

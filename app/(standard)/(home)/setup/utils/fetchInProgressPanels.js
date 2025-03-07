@@ -1,12 +1,7 @@
 import { db } from "@/lib/firebase";
 import { doc, query, getDocs, collection, where } from "firebase/firestore";
 
-export default async function fetchInProgressPanels(
-  uid,
-  setIsPanelInProgress,
-  setLoading,
-  isSolo
-) {
+export default async function fetchInProgressPanels(uid, setLoading, isSolo) {
   setLoading(true);
   const userRef = doc(db, "users", uid);
   const q = query(
@@ -22,7 +17,6 @@ export default async function fetchInProgressPanels(
   }));
   console.log(panels, "<-- in progress panels");
 
-  if (panels.length) await setIsPanelInProgress(true);
   setLoading(false);
   return panels;
 }
