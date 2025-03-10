@@ -6,6 +6,7 @@ import {
   BoundingBox,
   Cursor,
   Pencil,
+  TextAa,
 } from "@phosphor-icons/react";
 import { LineSegment } from "@phosphor-icons/react/dist/ssr";
 import next from "next";
@@ -28,7 +29,8 @@ const createElement = (id, x1, y1, x2, y2, type) => {
       return { id, x1, y1, x2, y2, type, roughElement };
     case "pencil":
       return { id, type, points: [{ x: x1, y: y1 }] };
-
+    case "text":
+      return { id, type, x1, y1, x2, y2, text: "" };
     default: // If type isn't a specified case => throw err
       throw new Error(`Invalid type: type not recognised: ${type}`);
   }
@@ -81,6 +83,8 @@ const positionWithinElement = (x, y, element) => {
         );
       });
       return betweenAnyPoint ? "inside" : null;
+    case "text":
+      return x >= x1 && x <= x2 && y >= y1 && y <= y2 ? "inside" : null;
     default:
       throw new Error(`Invalid type: type not recognised: ${type}`);
   }
@@ -227,7 +231,11 @@ const drawElement = (roughCanvas, context, element) => {
       );
       context.fill(new Path2D(stroke)); // Keeping track of users draw path via SVG
       break;
-
+    case "text":
+      context.textBaseline = "middle";
+      context.font = "24px sans-serif";
+      context.fillText(element.text, element.x1, element.y1);
+      break;
     default:
       throw new Error(`Invalid type: type not recognised: ${element.type}`);
   }
@@ -239,8 +247,12 @@ const adjustmentRequired = (type) => ["line", "rectangle"].includes(type);
 const Canvas = () => {
   const [elements, setElements, undo, redo] = useHistory([]); // Setting initial history state to an empty array
   const [action, setAction] = useState("none");
-  const [tool, setTool] = useState("line");
+  const [tool, setTool] = useState("text");
   const [selectedElement, setSelectedElement] = useState(null);
+  const [xOffset, setxOffset] = useState(0);
+  const [yOffset, setyOffset] = useState(0);
+
+  const textAreaRef = useRef();
 
   //used LayoutEffect is called after component is fully rendered to ensure the DOM is updated before performing drawing actions
   useLayoutEffect(() => {
@@ -253,8 +265,11 @@ const Canvas = () => {
     const roughCanvas = rough.canvas(canvas);
 
     //iterates over the elements array and draws them on the canvas
-    elements.forEach((element) => drawElement(roughCanvas, context, element));
-  }, [elements]);
+    elements.forEach((element) => {
+      if (action === "writing" && selectedElement.id === element.id) return;
+      drawElement(roughCanvas, context, element);
+    });
+  }, [elements, action, selectedElement]);
 
   // Enables user to use keyboard shortcuts to undo and redo actions
   useEffect(() => {
@@ -274,11 +289,21 @@ const Canvas = () => {
     };
   }, [undo, redo]);
 
+  useEffect(() => {
+    const textArea = textAreaRef.current;
+    if (action === "writing" && textArea) {
+      setTimeout(() => {
+        textArea.focus();
+      }, 50);
+      textArea.value = selectedElement.text;
+    }
+  }, [action, selectedElement]);
+
   //used to update the elemetents coordinates when one is moved or resized and then sets it back into state
   //id is the identifer of the element
   // x1, y1, x2, y2 are the new coordinates
   //type - line or square
-  const updateElement = (id, x1, y1, x2, y2, type) => {
+  const updateElement = (id, x1, y1, x2, y2, type, options) => {
     const elementsCopy = [...elements];
 
     switch (type) {
@@ -292,6 +317,17 @@ const Canvas = () => {
           { x: x2, y: y2 },
         ];
         break;
+      case "text":
+        const textWidth = document
+          .getElementById("canvas")
+          .getContext("2d")
+          .measureText(options.text).width;
+        const textHeight = 24;
+        elementsCopy[id] = {
+          ...createElement(id, x1, y1, x1 + textWidth, y1 + textHeight, type),
+          text: options.text,
+        };
+        break;
       default:
         throw new Error(`Invalid type: type not recognised: ${type}`);
     }
@@ -302,7 +338,6 @@ const Canvas = () => {
     const rect = event.target.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
-    // const { clientX, clientY } = event;
     if (tool === "selection") {
       const element = getElementAtPosition(x, y, elements);
       event.target.style.cursor = element
@@ -333,7 +368,16 @@ const Canvas = () => {
         const height = y2 - y1;
         const nexX1 = x - offsetX;
         const nexY1 = y - offsetY;
-        updateElement(id, nexX1, nexY1, nexX1 + width, nexY1 + height, type);
+        const options = type === "text" ? { text: selectedElement.text } : {};
+        updateElement(
+          id,
+          nexX1,
+          nexY1,
+          nexX1 + width,
+          nexY1 + height,
+          type,
+          options
+        );
       }
     } else if (action === "resizing") {
       const { id, type, position, ...coordinates } = selectedElement;
@@ -346,8 +390,20 @@ const Canvas = () => {
       updateElement(id, x1, y1, x2, y2, type);
     }
   };
-  const handleMouseUp = () => {
+  const handleMouseUp = (event) => {
+    const rect = event.target.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
     if (selectedElement) {
+      if (
+        selectedElement.type === "text" &&
+        x - selectedElement.offsetX === selectedElement.x1 &&
+        y - selectedElement.offsetY === selectedElement.y1
+      ) {
+        setAction("writing");
+        return;
+      }
+
       const index = selectedElement.id;
       const { id, type } = elements[index];
       if (
@@ -359,12 +415,18 @@ const Canvas = () => {
         updateElement(id, x1, y1, x2, y2, type);
       }
     }
+    if (action === "writing") return;
     setAction("none");
     setSelectedElement(null);
   };
 
   const handleMouseDown = (event) => {
-    // const { clientX, clientY } = event;
+    console.log("MouseDown: ", { action, tool, selectedElement });
+    if (action === "writing") {
+      handleBlur(event);
+      return;
+    }
+
     const rect = event.target.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
@@ -392,7 +454,7 @@ const Canvas = () => {
       const element = createElement(id, x, y, x, y, tool);
       setElements((prevState) => [...prevState, element]);
       setSelectedElement(element);
-      setAction("drawing");
+      setAction(tool === "text" ? "writing" : "drawing");
     }
   };
 
@@ -402,19 +464,36 @@ const Canvas = () => {
   const [size, setSize] = useState(0);
   useEffect(() => {
     setSize(refCanvasContainer.current.clientHeight);
+    const rect = refCanvasContainer.current.getBoundingClientRect();
+    setxOffset(rect.left);
+    setyOffset(rect.top);
   }, [refCanvasContainer]);
+
+  const handleBlur = () => {
+    const { id, x1, y1, type } = selectedElement;
+    setAction("none");
+    setSelectedElement(null);
+    updateElement(id, x1, y1, null, null, type, {
+      text: textAreaRef.current.value,
+    });
+    textAreaRef.current.value = "";
+  };
 
   return (
     <>
       <ButtonGroup sx={{ mx: "auto", my: 2 }}>
-        <Button variant="outlined" onClick={undo}>
+        <Button
+          variant="outlined"
+          onClick={() => {
+            undo();
+          }}
+        >
           <ArrowArcLeft size={20} /> <Box sx={visuallyHidden}>Undo</Box>
         </Button>
         <Button variant="outlined" onClick={redo}>
           <ArrowArcRight size={20} /> <Box sx={visuallyHidden}>Redo</Box>
         </Button>
       </ButtonGroup>
-
       <Box
         ref={refCanvasContainer}
         sx={{
@@ -427,6 +506,25 @@ const Canvas = () => {
           borderRadius: 2,
         }}
       >
+        {action === "writing" ? (
+          <textarea
+            ref={textAreaRef}
+            onBlur={handleBlur}
+            style={{
+              position: "absolute",
+              top: selectedElement.y1 + yOffset - 13,
+              left: selectedElement.x1 + xOffset - 6,
+              font: "24px sans-serif",
+              margin: 0,
+              padding: 0,
+              border: 0,
+              outline: 0,
+              resize: "auto",
+              overflow: "hidden",
+              background: "transparent",
+            }}
+          />
+        ) : null}
         <canvas
           id="canvas"
           height={size}
@@ -438,6 +536,8 @@ const Canvas = () => {
           Canvas
         </canvas>
       </Box>
+      {console.log(yOffset, xOffset)}
+
       <ButtonGroup sx={{ mx: "auto", my: 2 }}>
         <Button
           variant={tool === "selection" ? "contained" : "outlined"}
@@ -465,6 +565,13 @@ const Canvas = () => {
           onClick={() => setTool("pencil")}
         >
           <Pencil size={20} /> <Box sx={visuallyHidden}> Pencil tool </Box>
+        </Button>
+
+        <Button
+          variant={tool === "text" ? "contained" : "outlined"}
+          onClick={() => setTool("text")}
+        >
+          <TextAa size={20} /> <Box sx={visuallyHidden}>Text</Box>
         </Button>
       </ButtonGroup>
     </>
