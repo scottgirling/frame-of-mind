@@ -4,7 +4,17 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import Canvas from "../components/canvas";
 import TopBar from "@/app/components/TopBar";
 import Avatar from "@/app/components/Avatar";
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography, Tooltip, TextField } from "@mui/material";
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Typography,
+  Tooltip,
+  TextField,
+} from "@mui/material";
 import { auth, db } from "@/lib/firebase";
 import { arrayUnion, doc, updateDoc } from "firebase/firestore";
 import deletePanel from "@/app/(standard)/(home)/setup/utils/deletePanel";
@@ -25,15 +35,31 @@ export default function Create() {
   const [authUser] = useAuthState(auth);
   const router = useRouter();
 
-  const comicRef = doc(db, "comics", "eh2ZYR7ZS9Uh6MMnd5YS");
-  // const panelRef = doc(db, "panels", panelId);
-  // const userRef = doc(db, "users", authUser.uid);
-
-  // NEED TO SET UP NEXT.JS STRUCTURE SO COMIC ID AND PANEL ID GET PASSED THROUGH!
+  const [userRef, setUserRef] = useState(null);
+  const comicRef = doc(db, "comics", comicId);
+  const panelRef = doc(db, "panels", panelId);
+  const [validComic, setValidComic] = useState(null);
+  const [validPanel, setValidPanel] = useState(null);
 
   useEffect(() => {
     currentComicTheme();
-  }, [])
+  }, []);
+
+  useEffect(() => {
+    if (authUser) {
+      setUserRef(doc(db, "users", authUser.uid));
+    }
+  }, [authUser]);
+
+  useEffect(() => {
+    async function checkIds() {
+      const comicSnapshot = await getDoc(comicRef);
+      setValidComic(comicSnapshot._document ? true : false);
+      const panelSnapshot = await getDoc(comicRef);
+      setValidPanel(panelSnapshot._document ? true : false);
+    }
+    checkIds();
+  }, [comicId, panelId]);
 
   async function handleDiscard() {
     // Also show a dialog box saying it's been saved?
@@ -54,7 +80,7 @@ export default function Create() {
       console.log(rawDrawingDataString);
 
       await updateDoc(panelRef, {
-        rawDrawingData,
+        rawDrawingDataString,
         // panelCaption update here too?
       });
 
@@ -73,7 +99,7 @@ export default function Create() {
       console.log(rawDrawingDataString);
 
       await updateDoc(panelRef, {
-        rawDrawingData,
+        rawDrawingDataString,
         isInProgress: false,
         // panelCaption update here?
       });
@@ -82,7 +108,8 @@ export default function Create() {
         isInProgress: false,
       });
 
-      if (comicRef.panels.length === 8) {
+      const comicSnapshot = await getDoc(comicRef);
+      if (comicSnapshot.data().panels.length === 8) {
         await updateDoc(comicRef, {
           isCompleted: true,
         });
@@ -107,11 +134,13 @@ export default function Create() {
   };
 
   async function currentComicTheme() {
-    const comicTheme = (await getData("comics", "eh2ZYR7ZS9Uh6MMnd5YS")).result.data().comicTheme;
+    const comicTheme = (
+      await getData("comics", "eh2ZYR7ZS9Uh6MMnd5YS")
+    ).result.data().comicTheme;
     setComicTheme(comicTheme);
   }
 
-  return (
+  if (validComic && validPanel) {
     <>
       <TopBar
         components={
@@ -150,19 +179,20 @@ export default function Create() {
         }
       />
 
-      <Typography
-        sx={{ m: "auto", mt: 2 }}>
-          {comicTheme}
-      </Typography>
+      <Typography sx={{ m: "auto", mt: 2 }}>{comicTheme}</Typography>
 
-      <Tooltip 
-        title="Need some inspiration or not sure where to start? An idea is only a click away!" arrow placement="right">
-        <Button 
-          variant="contained" 
+      <Tooltip
+        title="Need some inspiration or not sure where to start? An idea is only a click away!"
+        arrow
+        placement="right"
+      >
+        <Button
+          variant="contained"
           sx={{ m: "auto", mt: 2 }}
           onClick={() => {
-          setInspireMe(inspireMeGenerator());
-        }}>
+            setInspireMe(inspireMeGenerator());
+          }}
+        >
           Inspire Me
         </Button>
       </Tooltip>
@@ -184,18 +214,13 @@ export default function Create() {
         <Canvas setRawDrawingData={setRawDrawingData} />;
       </Box>
 
-      <Box
-        component="form"
-        sx={{ m: "auto", mb: 5 }}
-      >
+      <Box component="form" sx={{ m: "auto", mb: 5 }}>
         {panelCaption ? (
-          <Typography>
-            Panel Caption: {panelCaption}
-          </Typography>
+          <Typography>Panel Caption: {panelCaption}</Typography>
         ) : (
-          <TextField 
-            id="outlined-basic" 
-            label="Panel Caption" 
+          <TextField
+            id="outlined-basic"
+            label="Panel Caption"
             variant="outlined"
             required
             helperText="Add a description of what's happening in your panel"
@@ -203,10 +228,11 @@ export default function Create() {
           />
         )}
       </Box>
-      <Button 
-        variant="contained" 
+      <Button
+        variant="contained"
         sx={{ m: "auto", mt: 2 }}
-        onClick={() => setPanelCaption("")}>
+        onClick={() => setPanelCaption("")}
+      >
         Remove Panel Caption
       </Button>
       {console.log(panelCaption, "<--- panelCaption")}
@@ -274,6 +300,7 @@ export default function Create() {
           </DialogActions>
         </Dialog>
       </Box>
-    </>
-  );
+    </>;
+  }
+  return <>Invalid comic/panel</>;
 }
