@@ -33,6 +33,7 @@ const theme = createTheme({
     },
     light: {
       main: "#FEF7FF",
+      light: "#FFFFFF",
     },
   },
 });
