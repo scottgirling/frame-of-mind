@@ -4,7 +4,12 @@ import Link from "next/link";
 
 export default function TopBar({ components }) {
   return (
-    <AppBar position="static" color="light" variant="outlined">
+    <AppBar
+      position="static"
+      color="light"
+      sx={{ bgcolor: "light.main" }}
+      variant="outlined"
+    >
       <Toolbar component={"nav"}>
         <Link
           href="/"
