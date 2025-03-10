@@ -5,32 +5,47 @@ import {
   ArrowArcRight,
   BoundingBox,
   Cursor,
+  Eraser,
+  PaintBucket,
   Pencil,
   TextAa,
 } from "@phosphor-icons/react";
 import { LineSegment } from "@phosphor-icons/react/dist/ssr";
-import next from "next";
 import getStroke from "perfect-freehand";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import rough from "roughjs/bundled/rough.esm";
+import { ColorPicker } from "primereact/colorpicker";
 
 //rough.js tool for generating shapes
 const generator = rough.generator();
 
 //function for creating squares or lines
-const createElement = (id, x1, y1, x2, y2, type) => {
+const createElement = (id, x1, y1, x2, y2, type, color, fill = false) => {
   switch (type) {
     case "line":
     case "rectangle":
+      const options = {
+        // Passing in options for canvas mutability.
+        stroke: `#${color}`,
+        fill: fill ? `#${color}` : "transparent",
+        fillStyle: "solid", // Fill shape with solid color selected
+      };
       const roughElement =
         type === "line"
-          ? generator.line(x1, y1, x2, y2)
-          : generator.rectangle(x1, y1, x2 - x1, y2 - y1);
-      return { id, x1, y1, x2, y2, type, roughElement };
+          ? generator.line(x1, y1, x2, y2, options)
+          : generator.rectangle(x1, y1, x2 - x1, y2 - y1, options);
+      return { id, x1, y1, x2, y2, type, roughElement, color, fill, options };
     case "pencil":
-      return { id, type, points: [{ x: x1, y: y1 }] };
+      return {
+        id,
+        type,
+        points: [{ x: x1, y: y1 }],
+        color,
+        fill: fill || false,
+      };
     case "text":
       return { id, type, x1, y1, x2, y2, text: "" };
+
     default: // If type isn't a specified case => throw err
       throw new Error(`Invalid type: type not recognised: ${type}`);
   }
@@ -226,10 +241,20 @@ const drawElement = (roughCanvas, context, element) => {
       break;
     case "pencil":
       // Options params for the stroke (thickness etc.)
+      context.strokeStyle = `#${element.color}`;
+      context.fillStyle = `#${element.color}`;
+
       const stroke = getSvgPathFromStroke(
         getStroke(element.points, { size: 4 })
       );
-      context.fill(new Path2D(stroke)); // Keeping track of users draw path via SVG
+
+      const path = new Path2D(stroke);
+      // Checks if the element is filled or not
+      if (element.fill) {
+        context.fill(path);
+      } else {
+        context.stroke(path); // Not filled => stroke
+      }
       break;
     case "text":
       context.textBaseline = "middle";
@@ -241,7 +266,7 @@ const drawElement = (roughCanvas, context, element) => {
   }
 };
 
-// Check i
+// Check if the type is line or rectangle => enable adjustment
 const adjustmentRequired = (type) => ["line", "rectangle"].includes(type);
 
 const Canvas = () => {
@@ -249,10 +274,29 @@ const Canvas = () => {
   const [action, setAction] = useState("none");
   const [tool, setTool] = useState("text");
   const [selectedElement, setSelectedElement] = useState(null);
+  const [color, setColor] = useState("000000"); // Default pen color
   const [xOffset, setxOffset] = useState(0);
   const [yOffset, setyOffset] = useState(0);
 
   const textAreaRef = useRef();
+  const handleFill = (element) => {
+    if (element) {
+      const elementsCopy = [...elements];
+      const index = element.id;
+      const { x1, y1, x2, y2, type } = element;
+      elementsCopy[index] = createElement(
+        index,
+        x1,
+        y1,
+        x2,
+        y2,
+        type,
+        color,
+        true
+      );
+      setElements(elementsCopy, true);
+    }
+  };
 
   //used LayoutEffect is called after component is fully rendered to ensure the DOM is updated before performing drawing actions
   useLayoutEffect(() => {
@@ -270,6 +314,10 @@ const Canvas = () => {
       drawElement(roughCanvas, context, element);
     });
   }, [elements, action, selectedElement]);
+
+  /* CHECK LOGIC TO COMPARE TO ABOVE: 
+  elements.forEach((element) => drawElement(roughCanvas, context, element));
+   }, [elements]); */
 
   // Enables user to use keyboard shortcuts to undo and redo actions
   useEffect(() => {
@@ -309,7 +357,9 @@ const Canvas = () => {
     switch (type) {
       case "line":
       case "rectangle":
-        elementsCopy[id] = createElement(id, x1, y1, x2, y2, type);
+        const currentElement = elementsCopy[id];
+        const fill = currentElement ? currentElement.fill : false;
+        elementsCopy[id] = createElement(id, x1, y1, x2, y2, type, color, fill);
         break;
       case "pencil":
         elementsCopy[id].points = [
@@ -420,16 +470,46 @@ const Canvas = () => {
     setSelectedElement(null);
   };
 
+  // set canvas size
+  const refCanvasContainer = useRef(null);
+  const [size, setSize] = useState(0);
+  useEffect(() => {
+    setSize(refCanvasContainer.current.clientHeight);
+  }, [refCanvasContainer]);
+
+  useEffect(() => {
+    setSize(refCanvasContainer.current.clientHeight);
+    const rect = refCanvasContainer.current.getBoundingClientRect();
+    setxOffset(rect.left);
+    setyOffset(rect.top);
+  }, [refCanvasContainer]);
+
+  const handleBlur = () => {
+    const { id, x1, y1, type } = selectedElement;
+    setAction("none");
+    setSelectedElement(null);
+    updateElement(id, x1, y1, null, null, type, {
+      text: textAreaRef.current.value,
+    });
+    textAreaRef.current.value = "";
+  };
+
   const handleMouseDown = (event) => {
-    console.log("MouseDown: ", { action, tool, selectedElement });
+    // const { clientX, clientY } = event;
+    const rect = event.target.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    if (tool === "fill") {
+      const element = getElementAtPosition(x, y, elements);
+      if (element) {
+        handleFill(element);
+      }
+      return;
+    }
     if (action === "writing") {
       handleBlur(event);
       return;
     }
-
-    const rect = event.target.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
     if (tool === "selection") {
       const element = getElementAtPosition(x, y, elements);
       if (element) {
@@ -451,43 +531,17 @@ const Canvas = () => {
       }
     } else {
       const id = elements.length;
-      const element = createElement(id, x, y, x, y, tool);
+      const element = createElement(id, x, y, x, y, tool, color);
       setElements((prevState) => [...prevState, element]);
       setSelectedElement(element);
       setAction(tool === "text" ? "writing" : "drawing");
     }
   };
 
-  // set canvas size
-
-  const refCanvasContainer = useRef(null);
-  const [size, setSize] = useState(0);
-  useEffect(() => {
-    setSize(refCanvasContainer.current.clientHeight);
-    const rect = refCanvasContainer.current.getBoundingClientRect();
-    setxOffset(rect.left);
-    setyOffset(rect.top);
-  }, [refCanvasContainer]);
-
-  const handleBlur = () => {
-    const { id, x1, y1, type } = selectedElement;
-    setAction("none");
-    setSelectedElement(null);
-    updateElement(id, x1, y1, null, null, type, {
-      text: textAreaRef.current.value,
-    });
-    textAreaRef.current.value = "";
-  };
-
   return (
     <>
       <ButtonGroup sx={{ mx: "auto", my: 2 }}>
-        <Button
-          variant="outlined"
-          onClick={() => {
-            undo();
-          }}
-        >
+        <Button variant="outlined" onClick={undo}>
           <ArrowArcLeft size={20} /> <Box sx={visuallyHidden}>Undo</Box>
         </Button>
         <Button variant="outlined" onClick={redo}>
@@ -543,7 +597,7 @@ const Canvas = () => {
           variant={tool === "selection" ? "contained" : "outlined"}
           onClick={() => setTool("selection")}
         >
-          <Cursor size={20} />{" "}
+          <Cursor size={20} />
           <Box sx={visuallyHidden}>Move and Manipulate Object Tool</Box>
         </Button>
         <Button
@@ -556,27 +610,44 @@ const Canvas = () => {
           variant={tool === "rectangle" ? "contained" : "outlined"}
           onClick={() => setTool("rectangle")}
         >
-          <BoundingBox size={20} />{" "}
+          <BoundingBox size={20} />
           <Box sx={visuallyHidden}>Rectangle Tool</Box>
         </Button>
-
         <Button
           variant={tool === "pencil" ? "contained" : "outlined"}
           onClick={() => setTool("pencil")}
         >
           <Pencil size={20} /> <Box sx={visuallyHidden}> Pencil tool </Box>
         </Button>
-
+        <Button
+          variant={tool === "eraser" ? "contained" : "outlined"}
+          onClick={() => setTool("eraser")}
+        >
+          <Eraser size={20} /> <Box sx={visuallyHidden}> Eraser </Box>
+        </Button>
         <Button
           variant={tool === "text" ? "contained" : "outlined"}
           onClick={() => setTool("text")}
         >
-          <TextAa size={20} /> <Box sx={visuallyHidden}>Text</Box>
+          <TextAa size={20} /> <Box sx={visuallyHidden}> Text</Box>
         </Button>
+
+        <Button
+          variant={tool === "fill" ? "contained" : "outlined"}
+          onClick={() => setTool("fill")}
+        >
+          <PaintBucket size={20} /> <Box sx={visuallyHidden}> Fill </Box>
+        </Button>
+
+        {/* Adding color picker UI */}
+        <ColorPicker
+          value={color}
+          onChange={(e) => {
+            setColor(e.target.value);
+          }}
+        />
       </ButtonGroup>
     </>
   );
 };
 export default Canvas;
-
-// Time of video: 23: 50
