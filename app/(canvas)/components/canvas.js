@@ -35,7 +35,13 @@ const createElement = (id, x1, y1, x2, y2, type, color, fill = false) => {
           : generator.rectangle(x1, y1, x2 - x1, y2 - y1, options);
       return { id, x1, y1, x2, y2, type, roughElement, color, fill };
     case "pencil":
-      return { id, type, points: [{ x: x1, y: y1 }], color, fill };
+      return {
+        id,
+        type,
+        points: [{ x: x1, y: y1 }],
+        color,
+        fill: fill || false,
+      };
 
     default: // If type isn't a specified case => throw err
       throw new Error(`Invalid type: type not recognised: ${type}`);
@@ -236,11 +242,13 @@ const drawElement = (roughCanvas, context, element) => {
       const stroke = getSvgPathFromStroke(
         getStroke(element.points, { size: 4 })
       );
+
+      const path = new Path2D(stroke);
       // Checks if the element is filled or not
       if (element.fill) {
-        context.fill(new Path2D(stroke));
+        context.fill(path);
       } else {
-        context.stroke(new Path2D(stroke)); // Not filled => stroke
+        context.stroke(path); // Not filled => stroke
       }
       break;
 
@@ -329,6 +337,7 @@ const Canvas = () => {
           ...elementsCopy[id].points,
           { x: x2, y: y2 },
         ];
+
         break;
       default:
         throw new Error(`Invalid type: type not recognised: ${type}`);
