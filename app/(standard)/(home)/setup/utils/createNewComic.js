@@ -1,13 +1,15 @@
 import { addDataWithAutoID } from "@/app/firestore/addData";
 import { db } from "@/lib/firebase";
 import { doc, serverTimestamp } from "firebase/firestore";
-import addPanelToComic from "./addPanelToComic";
+import addPanelToComic from "./addPanelToComic.js";
+import { comicTheme } from "./inspireMeGenerator.js";
+
 
 export default async function createNewComic(uid, isSolo) {
   const userRef = doc(db, "users", uid);
   const { result } = await addDataWithAutoID("comics", {
     comicLikes: 0,
-    comicTheme: "", // Link to random word API
+    comicTheme,
     completedAt: null,
     createdAt: serverTimestamp(),
     createdBy: userRef,

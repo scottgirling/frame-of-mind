@@ -2,6 +2,7 @@
   "name": "frame-of-mind",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
@@ -17,11 +18,12 @@
     "@phosphor-icons/react": "^2.1.7",
     "next": "15.2.0",
     "perfect-freehand": "^1.2.2",
+    "random-word-slugs": "^0.1.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-firebase-hooks": "^5.1.1",
-    "roughjs": "^4.6.6",
-    "primereact": "^10.9.3"
+    "primereact": "^10.9.3",
+    "roughjs": "^4.6.6"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
