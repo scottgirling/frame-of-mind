@@ -21,11 +21,11 @@
     "react-dom": "^19.0.0",
     "react-firebase-hooks": "^5.1.1",
     "roughjs": "^4.6.6",
-    "react-pick-color": "^2.0.0"
+    "primereact": "^10.9.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "react-pick-color": "^2.0.0",
+    "primereact": "^10.9.3",
     "tailwindcss": "^4"
   }
 }
