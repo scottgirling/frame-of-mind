@@ -20,6 +20,7 @@ export default async function createNewComic(uid, isSolo) {
     panels: [],
   });
   console.log(result.id, "<-- this is the new comic id");
-
-  await addPanelToComic(uid, result.id, isSolo);
+  const comicId = result.id;
+  const panelId = await addPanelToComic(uid, result.id, isSolo);
+  return [comicId, panelId];
 }

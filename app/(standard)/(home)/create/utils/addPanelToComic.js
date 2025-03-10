@@ -27,4 +27,5 @@ export default async function addPanelToComic(uid, comicId, isSolo) {
     isInProgress: true,
     panels: arrayUnion(panelRef),
   });
+  return result.id;
 }

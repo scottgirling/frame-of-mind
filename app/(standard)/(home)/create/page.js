@@ -14,7 +14,6 @@ import {
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import createNewComic from "./utils/createNewComic";
 import addPanelToComic from "./utils/addPanelToComic";
@@ -22,6 +21,7 @@ import fetchExistingComics from "./utils/fetchExistingComics";
 import fetchInProgressPanels from "./utils/fetchInProgressPanels";
 import filterYesterdaysComics from "./utils/filterYesterdaysComics";
 import deletePanel from "./utils/deletePanel";
+import NotLoggedIn from "@/app/components/authentication/NotLoggedIn";
 
 export default function CreateComicPage() {
   const router = useRouter();
@@ -79,7 +79,7 @@ export default function CreateComicPage() {
       } else {
         // If no solo panel in progress, then add panel to comic
         await addPanelToComic(authUser.uid, comic.id, isSolo);
-        router.push("/create");
+        router.push("/create/" + comic.id + "/" + panelForComic.id);
       }
     } else {
       // Team mode:
@@ -92,8 +92,8 @@ export default function CreateComicPage() {
       } else {
         // If no team panel in progress, then add panel to comic
         setSelectedComic(comic);
-        await addPanelToComic(authUser.uid, comic.id, isSolo);
-        router.push("/create");
+        const panelId = await addPanelToComic(authUser.uid, comic.id, isSolo);
+        router.push("/create/" + comic.id + "/" + panelId);
       }
     }
   }
@@ -133,8 +133,8 @@ export default function CreateComicPage() {
       }
     }
     // If no panels in progress and within limit then create new
-    await createNewComic(authUser.uid, isSolo);
-    router.push("/create");
+    const [comicId, panelId] = await createNewComic(authUser.uid, isSolo);
+    router.push("/create/" + comicId + "/" + panelId);
   }
 
   // Dialog: Continue drawing on the selected comic
@@ -144,7 +144,7 @@ export default function CreateComicPage() {
         return panel.comicRef.id === selectedComic.id;
       });
       if (panelForComic) {
-        router.push("/create");
+        router.push("/create/" + selectedComic.id + "/" + panelForComic.id);
       }
       setOpenDialog(false);
     }
@@ -171,6 +171,12 @@ export default function CreateComicPage() {
     }
   }
 
+  if (loading) {
+    return <CircularProgress />;
+  }
+  if (!authUser) {
+    return <NotLoggedIn />;
+  }
   return (
     <Box component={"section"}>
       <p>Choose your gameplay modes below!</p>
@@ -223,18 +229,15 @@ export default function CreateComicPage() {
             ) : (
               existingComics.map((comic) => {
                 return (
-                  <div key={comic.id}>
-                    <Link href="/create" passHref>
-                      <Button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleContinueExistingClick(comic);
-                        }}
-                      >
-                        {comic.comicTheme}
-                      </Button>
-                    </Link>
-                  </div>
+                  <Button
+                    key={comic.id}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleContinueExistingClick(comic);
+                    }}
+                  >
+                    {comic.comicTheme}
+                  </Button>
                 );
               })
             )}
