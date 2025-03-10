@@ -26,6 +26,8 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import deletePanel from "@/app/(standard)/(home)/create/utils/deletePanel";
+import { inspireMeGenerator } from "@/app/(standard)/(home)/create/utils/inspireMeGenerator";
+import getData from "@/app/firestore/getData";
 import { useParams, useRouter } from "next/navigation";
 import { FloppyDiskBack, Trash } from "@phosphor-icons/react/dist/ssr";
 import { inspireMeGenerator } from "@/app/(standard)/(home)/setup/utils/inspireMeGenerator";
@@ -265,31 +267,29 @@ export default function Create() {
             setRawDrawingData={setRawDrawingData} 
             setPanelCaption={setPanelCaption}
             panelInfo={panelInfo}
-          />;
-        </Box>
-        <Box component="form" sx={{ m: "auto", mb: 5 }}>
-        {panelCaption ? (
-          <Typography>Panel Caption: {panelCaption}</Typography>
-        ) : (
-          <TextField
-            id="outlined-basic"
-            label="Panel Caption"
-            variant="outlined"
-            required
-            helperText="Add a description of what's happening in your panel"
-            onBlur={(event) => setPanelCaption(event.target.value)}
           />
-        )}
-      </Box>
-      <Button
-        variant="contained"
-        sx={{ m: "auto", mt: 2 }}
-        onClick={() => setPanelCaption("")}
-      >
-        Remove Panel Caption
-      </Button>
-      {console.log(panelCaption, "<--- panelCaption")}
-
+          <Box component="form" sx={{ m: "auto", mb: 5 }}>
+            {panelCaption ? (
+              <Typography>Panel Caption: {panelCaption}</Typography>
+            ) : (
+              <TextField
+                id="outlined-basic"
+                label="Panel Caption"
+                variant="outlined"
+                required
+                helperText="Add a description of what's happening in your panel"
+                onBlur={(event) => setPanelCaption(event.target.value)}
+              />
+            )}
+          </Box>
+          <Button
+            variant="contained"
+            sx={{ m: "auto", mt: 2 }}
+            onClick={() => setPanelCaption("")}
+          >
+            Remove Panel Caption
+          </Button>
+        </Box>
         <Box>
           <Dialog open={openCheckDialog} onClose={handleDialogClose}>
             <DialogTitle>
