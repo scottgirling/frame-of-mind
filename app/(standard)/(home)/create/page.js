@@ -171,12 +171,10 @@ export default function CreateComicPage() {
     }
   }
 
-  if (loading) {
-    return <CircularProgress />;
-  }
   if (!authUser) {
     return <NotLoggedIn />;
   }
+
   return (
     <Box component={"section"}>
       <p>Choose your gameplay modes below!</p>
