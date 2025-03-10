@@ -16,9 +16,18 @@ import {
   TextField,
 } from "@mui/material";
 import { auth, db } from "@/lib/firebase";
-import { arrayUnion, doc, updateDoc } from "firebase/firestore";
-import deletePanel from "@/app/(standard)/(home)/setup/utils/deletePanel";
+import {
+  arrayUnion,
+  doc,
+  getDoc,
+  increment,
+  serverTimestamp,
+  Timestamp,
+  updateDoc,
+} from "firebase/firestore";
+import deletePanel from "@/app/(standard)/(home)/create/utils/deletePanel";
 import { useParams, useRouter } from "next/navigation";
+import { FloppyDiskBack, Trash } from "@phosphor-icons/react/dist/ssr";
 import { inspireMeGenerator } from "@/app/(standard)/(home)/setup/utils/inspireMeGenerator";
 import getData from "@/app/firestore/getData";
 
@@ -40,6 +49,9 @@ export default function Create() {
   const panelRef = doc(db, "panels", panelId);
   const [validComic, setValidComic] = useState(null);
   const [validPanel, setValidPanel] = useState(null);
+  const [panelInfo, setPanelInfo] = useState(null);
+  const [comicInfo, setComicInfo] = useState(null);
+  const [userInfo, setUserInfo] = useState(null);
 
   useEffect(() => {
     currentComicTheme();
@@ -57,12 +69,16 @@ export default function Create() {
       setValidComic(comicSnapshot._document ? true : false);
       const panelSnapshot = await getDoc(comicRef);
       setValidPanel(panelSnapshot._document ? true : false);
+      const userSnapshot = await getDoc(userRef);
+
+      setPanelInfo(panelSnapshot.data());
+      setComicInfo(comicSnapshot.data());
+      setUserInfo(userSnapshot.data());
     }
     checkIds();
   }, [comicId, panelId]);
 
   async function handleDiscard() {
-    // Also show a dialog box saying it's been saved?
     if (!comicId || !panelId) return;
 
     await deletePanel(authUser.uid, comicId, panelId);
@@ -72,7 +88,6 @@ export default function Create() {
   }
 
   async function handleSave() {
-    // Also show a dialog box saying it's been saved
     try {
       if (!comicId || !panelId) return;
 
@@ -81,7 +96,7 @@ export default function Create() {
 
       await updateDoc(panelRef, {
         rawDrawingDataString,
-        // panelCaption update here too?
+        panelCaption,
       });
 
       setDialogAction("save");
@@ -101,7 +116,7 @@ export default function Create() {
       await updateDoc(panelRef, {
         rawDrawingDataString,
         isInProgress: false,
-        // panelCaption update here?
+        panelCaption,
       });
 
       await updateDoc(comicRef, {
@@ -112,10 +127,43 @@ export default function Create() {
       if (comicSnapshot.data().panels.length === 8) {
         await updateDoc(comicRef, {
           isCompleted: true,
+          completedAt: serverTimestamp(),
         });
         await updateDoc(userRef, {
           myComics: arrayUnion(comicRef),
         });
+
+        await updateDoc(userRef, {
+          lastContributedAt: serverTimestamp(),
+        });
+
+        const now = Timestamp.now().toMillis();
+        const yesterdayDate = now - 24 * 60 * 60 * 1000;
+        const today = new Date(now).getDate();
+        const yesterday = new Date(yesterdayDate).getDate();
+        const lastContributedMillis = userInfo.lastContributedAt.toMillis();
+        const currentDayStreak = userInfo.dayStreak;
+
+        if (
+          now - lastContributedMillis < 48 * 60 * 60 * 1000 &&
+          today === yesterday + 1
+        ) {
+          // Add 1 to dailyStreak if the next day
+          await updateDoc(userRef, {
+            dayStreak: increment(1),
+          });
+        } else {
+          // Otherwise, start new streak
+          await updateDoc(userRef, {
+            dayStreak: 1,
+          });
+        }
+
+        if (currentDayStreak === 6) {
+          await updateDoc(userRef, {
+            weekStreak: increment(1),
+          });
+        }
       }
 
       setDialogAction("submit");
@@ -145,6 +193,9 @@ export default function Create() {
       <TopBar
         components={
           <>
+              <Typography variant="h2" sx={{ fontSize: "1.3rem", ml: "auto" }}>
+                Comic theme: {comicTheme}
+              </Typography>
             <Button
               sx={{ ml: "auto", mr: 0.5 }}
               variant="outlined"
@@ -153,7 +204,7 @@ export default function Create() {
                 setOpenCheckDialog(true);
               }}
             >
-              Discard
+              <Trash />
             </Button>
             <Button
               sx={{ ml: 0.5, mr: 0.5 }}
@@ -162,7 +213,7 @@ export default function Create() {
                 handleSave();
               }}
             >
-              Save draft
+              <FloppyDiskBack />
             </Button>
             <Button
               sx={{ ml: 0.5, mr: 2 }}
@@ -179,7 +230,6 @@ export default function Create() {
         }
       />
 
-      <Typography sx={{ m: "auto", mt: 2 }}>{comicTheme}</Typography>
 
       <Tooltip
         title="Need some inspiration or not sure where to start? An idea is only a click away!"
@@ -201,20 +251,23 @@ export default function Create() {
         <Typography sx={{ m: "auto", mt: 2 }}>Try... {inspireMe}</Typography>
       )}
 
-      <Box
-        component={"main"}
-        sx={{
-          mt: "1.25rem",
-          display: "flex",
-          flexDirection: "column",
-          flexGrow: 1,
-          maxHeight: "100%",
-        }}
-      >
-        <Canvas setRawDrawingData={setRawDrawingData} />;
-      </Box>
-
-      <Box component="form" sx={{ m: "auto", mb: 5 }}>
+        <Box
+          component={"main"}
+          sx={{
+            mt: "1.25rem",
+            display: "flex",
+            flexDirection: "column",
+            flexGrow: 1,
+            maxHeight: "100%",
+          }}
+        >
+          <Canvas
+            setRawDrawingData={setRawDrawingData} 
+            setPanelCaption={setPanelCaption}
+            panelInfo={panelInfo}
+          />;
+        </Box>
+        <Box component="form" sx={{ m: "auto", mb: 5 }}>
         {panelCaption ? (
           <Typography>Panel Caption: {panelCaption}</Typography>
         ) : (
@@ -237,70 +290,92 @@ export default function Create() {
       </Button>
       {console.log(panelCaption, "<--- panelCaption")}
 
-      <Box>
-        <Dialog open={openCheckDialog} onClose={handleDialogClose}>
-          <DialogTitle>
-            {dialogAction === "discard" && "Discard Panel"}
-            {dialogAction === "submit" && "Submit Panel"}
-          </DialogTitle>
-          <DialogContent>
-            {dialogAction === "discard" && (
-              <Typography variant="body1">
-                Are you sure you want to discard this panel? This action cannot
-                be undone.
-              </Typography>
-            )}
-            {dialogAction === "submit" && (
-              <Typography variant="body1">
-                Are you ready to submit your panel? Once submitted, you won't be
-                able to make further changes.
-              </Typography>
-            )}
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleDialogClose}>Cancel</Button>
-            {dialogAction === "discard" && (
-              <Button onClick={handleDiscard}>Discard</Button>
-            )}
-            {dialogAction === "submit" && (
-              <Button onClick={handleSubmit}>Submit</Button>
-            )}
-          </DialogActions>
-        </Dialog>
-      </Box>
-      <Box>
-        <Dialog open={openConfirmationDialog} onClose={handleDialogClose}>
-          <DialogTitle>Success!</DialogTitle>
-          <DialogContent>
-            {dialogAction === "discard" && (
-              <Typography variant="body1">
-                Panel successfully deleted. Click below to return to home.
-              </Typography>
-            )}
-            {dialogAction === "save" && (
-              <Typography variant="body1">
-                Panel successfully saved. Click below to return to home.
-              </Typography>
-            )}
-            {dialogAction === "submit" && (
-              <Typography variant="body1">
-                Panel successfully submitted. Click below to return to home.
-              </Typography>
-            )}
-          </DialogContent>
-          <DialogActions>
-            <Button
-              onClick={() => {
+        <Box>
+          <Dialog open={openCheckDialog} onClose={handleDialogClose}>
+            <DialogTitle>
+              {dialogAction === "discard" && "Discard Panel"}
+              {dialogAction === "submit" && "Submit Panel"}
+            </DialogTitle>
+            <DialogContent>
+              {dialogAction === "discard" && (
+                <Typography variant="body1">
+                  Are you sure you want to discard this panel? This action
+                  cannot be undone.
+                </Typography>
+              )}
+              {dialogAction === "submit" && (
+                <Typography variant="body1">
+                  Are you ready to submit your panel? Once submitted, you won't
+                  be able to make further changes.
+                </Typography>
+              )}
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleDialogClose}>Cancel</Button>
+              {dialogAction === "discard" && (
+                <Button
+                  onClick={() => {
+                    setOpenCheckDialog(false);
+                    handleDiscard();
+                  }}
+                >
+                  Discard
+                </Button>
+              )}
+              {dialogAction === "submit" && (
+                <Button
+                  onClick={() => {
+                    setOpenCheckDialog(false);
+                    handleSubmit();
+                  }}
+                >
+                  Submit
+                </Button>
+              )}
+            </DialogActions>
+          </Dialog>
+        </Box>
+        <Box>
+          <Dialog
+            disableEscapeKeyDown
+            open={openConfirmationDialog}
+            onClose={(event, reason) => {
+              if (reason !== "backdropClick") {
                 handleDialogClose();
-                router.push("/");
-              }}
-            >
-              Return home
-            </Button>
-          </DialogActions>
-        </Dialog>
-      </Box>
-    </>;
-  }
+              } else return;
+            }}
+          >
+            <DialogTitle>Success!</DialogTitle>
+            <DialogContent>
+              {dialogAction === "discard" && (
+                <Typography variant="body1">
+                  Panel successfully deleted. Click below to return to home.
+                </Typography>
+              )}
+              {dialogAction === "save" && (
+                <Typography variant="body1">
+                  Panel successfully saved. Click below to return to home.
+                </Typography>
+              )}
+              {dialogAction === "submit" && (
+                <Typography variant="body1">
+                  Panel successfully submitted. Click below to return to home.
+                </Typography>
+              )}
+            </DialogContent>
+            <DialogActions>
+              <Button
+                onClick={() => {
+                  handleDialogClose();
+                  router.push("/");
+                }}
+              >
+                Return home
+              </Button>
+            </DialogActions>
+          </Dialog>
+        </Box>
+      </>
+    );}
   return <>Invalid comic/panel</>;
 }
