@@ -113,7 +113,6 @@ export default function Create() {
       if (!comicId || !panelId) return;
 
       const rawDrawingDataString = JSON.stringify(rawDrawingData);
-      console.log(rawDrawingDataString);
 
       await updateDoc(panelRef, {
         rawDrawingDataString,

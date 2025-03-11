@@ -324,7 +324,6 @@ const Canvas = ({ setRawDrawingData, setPanelCaption, panelInfo }) => {
 
   // Enables user to use keyboard shortcuts to undo and redo actions
   useEffect(() => {
-    console.log(panelInfo);
     const undoRedoFunction = (event) => {
       if ((event.metaKey || event.ctrlKey) && event.key === "z") {
         if (event.shiftKey) {
@@ -609,7 +608,6 @@ const Canvas = ({ setRawDrawingData, setPanelCaption, panelInfo }) => {
           Canvas
         </canvas>
       </Box>
-      {console.log(yOffset, xOffset)}
 
       <ButtonGroup sx={{ mx: "auto", my: 2 }}>
         <Button
