@@ -166,8 +166,9 @@ export default function Create() {
         const yesterdayDate = now - 24 * 60 * 60 * 1000;
         const today = new Date(now).getDate();
         const yesterday = new Date(yesterdayDate).getDate();
-        const lastContributedMillis = userInfo.lastContributedAt.toMillis();
-        const currentDayStreak = userInfo.dayStreak;
+        const userData = (await getData("users", authUser.uid)).result.data();
+        const lastContributedMillis = userData.lastContributedAt.toMillis();
+        const currentDayStreak = userData.dayStreak;
         if (
           now - lastContributedMillis < 48 * 60 * 60 * 1000 &&
           today === yesterday + 1
