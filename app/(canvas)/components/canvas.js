@@ -514,6 +514,17 @@ const Canvas = () => {
       handleBlur(event);
       return;
     }
+
+    if (tool === "eraser") {
+      const element = getElementAtPosition(x, y, elements);
+      if (element) {
+        setElements((elements) =>
+          elements.filter((currentElement) => currentElement.id !== element.id)
+        );
+      }
+      return;
+    }
+
     if (tool === "selection") {
       const element = getElementAtPosition(x, y, elements);
       if (element) {
