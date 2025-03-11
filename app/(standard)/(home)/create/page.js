@@ -74,7 +74,7 @@ export default function CreateComicPage() {
         (panel) => panel.comicRef.id === comic.id
       );
       if (panelForComic) {
-        setOpenDialog(true);
+        handleContinueDrawing();
         setLoading(false);
       } else {
         // If no solo panel in progress, then add panel to comic
@@ -196,7 +196,10 @@ export default function CreateComicPage() {
               setShowExistingComics(true);
             } else {
               // In team mode, use oldest comic
-              if (existingComics.length === 0) {
+              if (panelsInProgress.length) {
+                handleContinueExistingClick(panelsInProgress[0].comicRef);
+                return;
+              } else if (existingComics.length === 0) {
                 setError("No existing comics found.");
                 return;
               }
