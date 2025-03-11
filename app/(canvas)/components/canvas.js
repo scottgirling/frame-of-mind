@@ -272,7 +272,7 @@ const drawElement = (roughCanvas, context, element) => {
 // Check if the type is line or rectangle => enable adjustment
 const adjustmentRequired = (type) => ["line", "rectangle"].includes(type);
 
-const Canvas = ({ setRawDrawingData }) => {
+const Canvas = ({ setRawDrawingData, setPanelCaption, panelInfo }) => {
   const [elements, setElements, undo, redo] = useHistory([], setRawDrawingData); // Setting initial history state to an empty array
   const [action, setAction] = useState("none");
   const [tool, setTool] = useState("text");
@@ -324,6 +324,7 @@ const Canvas = ({ setRawDrawingData }) => {
 
   // Enables user to use keyboard shortcuts to undo and redo actions
   useEffect(() => {
+    console.log(panelInfo);
     const undoRedoFunction = (event) => {
       if ((event.metaKey || event.ctrlKey) && event.key === "z") {
         if (event.shiftKey) {
