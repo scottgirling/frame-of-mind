@@ -11,10 +11,9 @@ export default async function addPanelToComic(uid, comicId, isSolo) {
   const comicRef = doc(db, "comics", comicId);
   const userRef = doc(db, "users", uid);
   const { result } = await addDataWithAutoID("panels", {
-    audio: "",
     comicRef: comicRef,
     panelCaption: "",
-    rawDrawingData: "",
+    rawDrawingDataString: "",
     userRef: userRef,
     createdAt: serverTimestamp(),
     isInProgress: true,
