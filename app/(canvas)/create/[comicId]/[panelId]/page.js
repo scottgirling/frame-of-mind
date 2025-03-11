@@ -132,7 +132,6 @@ export default function Create() {
       if (!comicId || !panelId) return;
 
       const rawDrawingDataString = JSON.stringify(rawDrawingData);
-      console.log(rawDrawingDataString);
 
       await updateDoc(panelRef, {
         rawDrawingDataString,
@@ -164,7 +163,6 @@ export default function Create() {
         const yesterday = new Date(yesterdayDate).getDate();
         const lastContributedMillis = userInfo.lastContributedAt.toMillis();
         const currentDayStreak = userInfo.dayStreak;
-
         if (
           now - lastContributedMillis < 48 * 60 * 60 * 1000 &&
           today === yesterday + 1
@@ -177,6 +175,7 @@ export default function Create() {
           // Otherwise, start new streak
           await updateDoc(userRef, {
             dayStreak: 1,
+            weekStreak: 0,
           });
         }
 
