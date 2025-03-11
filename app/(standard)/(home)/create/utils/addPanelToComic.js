@@ -19,7 +19,6 @@ export default async function addPanelToComic(uid, comicId, isSolo) {
     isInProgress: true,
     isSolo: isSolo,
   });
-  console.log(result.id, "<-- this is the new panel id");
 
   const panelRef = doc(db, "panels", result.id);
   await updateDoc(comicRef, {
