@@ -78,8 +78,8 @@ export default function CreateComicPage() {
         setLoading(false);
       } else {
         // If no solo panel in progress, then add panel to comic
-        await addPanelToComic(authUser.uid, comic.id, isSolo);
-        router.push("/create/" + comic.id + "/" + panelForComic.id);
+        const panelId = await addPanelToComic(authUser.uid, comic.id, isSolo);
+        router.push("/create/" + comic.id + "/" + panelId);
       }
     } else {
       // Team mode:
