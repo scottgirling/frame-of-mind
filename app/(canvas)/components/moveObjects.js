@@ -115,7 +115,6 @@ const adjustElementCoordinates = (element) => {
 export default function MoveObjects() {
   const [action, setAction] = useState("none");
   const [elements, setElements] = useState([]);
-  console.log(elements);
   const [drawMode, setDrawMode] = useState("line");
   const [tool, setTool] = useState("drawing");
   const [selectedElement, setSelectedElement] = useState(null);

@@ -26,7 +26,7 @@ export default async function signUp(displayName, email, password, setLoading) {
     await updateProfile(updatedUser, { displayName });
     setLoading(false);
     return result;
-  } catch (e) {
-    console.log(e);
+  } catch (error) {
+    console.log(error);
   }
 }
