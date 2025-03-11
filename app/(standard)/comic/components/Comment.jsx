@@ -17,7 +17,7 @@ export default function Comment({
   const [timestamp, setTimestamp] = useState(null);
 
   useEffect(() => {
-    // prevent hydration errors by handling date formatting in a useeffect
+    // prevent hydration errors by handling date formatting in a useEffect
     const date = new Date(commentPostedDate);
     setDateTime(date.toISOString().split("Z")[0]);
     setTimestamp(
