@@ -191,7 +191,7 @@ const resizedCoordinates = (x, y, position, coordinates) => {
 //selectedElement - used to store the currently selected element for moving or resizing
 
 const useHistory = (initialState, setRawDrawingData) => {
-  const [index, setIndex] = useState(0);
+  const [index, setIndex] = useState(initialState.length);
   const [history, setHistory] = useState([initialState]);
   const setState = (action, overwrite = false) => {
     const newState =
@@ -272,8 +272,14 @@ const drawElement = (roughCanvas, context, element) => {
 // Check if the type is line or rectangle => enable adjustment
 const adjustmentRequired = (type) => ["line", "rectangle"].includes(type);
 
-const Canvas = ({ setRawDrawingData, setPanelCaption, panelInfo }) => {
+const Canvas = ({
+  setRawDrawingData,
+  setPanelCaption,
+  panelInfo,
+  parsedDrawingData,
+}) => {
   const [elements, setElements, undo, redo] = useHistory([], setRawDrawingData); // Setting initial history state to an empty array
+
   const [action, setAction] = useState("none");
   const [tool, setTool] = useState("text");
   const [selectedElement, setSelectedElement] = useState(null);
@@ -300,6 +306,9 @@ const Canvas = ({ setRawDrawingData, setPanelCaption, panelInfo }) => {
       setElements(elementsCopy, true);
     }
   };
+  useLayoutEffect(() => {
+    setElements(parsedDrawingData, true, true);
+  }, []);
 
   //used LayoutEffect is called after component is fully rendered to ensure the DOM is updated before performing drawing actions
   useLayoutEffect(() => {
@@ -312,19 +321,15 @@ const Canvas = ({ setRawDrawingData, setPanelCaption, panelInfo }) => {
     const roughCanvas = rough.canvas(canvas);
 
     //iterates over the elements array and draws them on the canvas
+
     elements.forEach((element) => {
       if (action === "writing" && selectedElement.id === element.id) return;
       drawElement(roughCanvas, context, element);
     });
   }, [elements, action, selectedElement]);
 
-  /* CHECK LOGIC TO COMPARE TO ABOVE: 
-  elements.forEach((element) => drawElement(roughCanvas, context, element));
-   }, [elements]); */
-
   // Enables user to use keyboard shortcuts to undo and redo actions
   useEffect(() => {
-    console.log(panelInfo);
     const undoRedoFunction = (event) => {
       if ((event.metaKey || event.ctrlKey) && event.key === "z") {
         if (event.shiftKey) {
@@ -503,7 +508,6 @@ const Canvas = ({ setRawDrawingData, setPanelCaption, panelInfo }) => {
   };
 
   const handleMouseDown = (event) => {
-    // const { clientX, clientY } = event;
     const rect = event.target.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
@@ -609,7 +613,6 @@ const Canvas = ({ setRawDrawingData, setPanelCaption, panelInfo }) => {
           Canvas
         </canvas>
       </Box>
-      {console.log(yOffset, xOffset)}
 
       <ButtonGroup sx={{ mx: "auto", my: 2 }}>
         <Button
