@@ -4,9 +4,11 @@ import CommentsList from "../components/CommentsList";
 import { Box } from "@mui/material";
 import { useMediaQuery } from "react-responsive";
 import ComicGrid from "../components/ComicGrid";
+import fetchCommentsForComic from "../utils/fetchCommentsForComic";
+import getData from "@/app/firestore/getData";
 
 export default function ComicPage({ params }) {
-  const comicID = use(params).id;
+  const comicId = use(params).id;
   const isSmallScreen = useMediaQuery({
     query: "(max-width: 600px)",
   });
@@ -14,27 +16,34 @@ export default function ComicPage({ params }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const [comicData, setComicData] = useState(null);
+  const [authUser] = useAuthState(auth);
+  const [userRef, setUserRef] = useState(null);
 
+  const comicRef = doc(db, "comics", comicId);
+  const [comicInfo, setComicInfo] = useState(null);
   const [isUsersComic, setIsUsersComic] = useState(false);
-  const [comicIsPrivate, setComicIsPrivate] = useState(false);
+  const [comicIsPublic, setComicIsPublic] = useState(false);
 
   const [comments, setComments] = useState([]);
   const [commentBody, setCommentBody] = useState("");
   const [isPosting, setIsPosting] = useState(false);
 
   useEffect(() => {
-    const fetchData = async (comicID) => {
+    if (authUser) {
+      setUserRef(doc(db, "users", authUser.uid));
+    }
+  }, [authUser]);
+
+  useEffect(() => {
+    async function fetchComicsAndComments(comicId, comicRef) {
       try {
         setLoading(true);
 
-        // Not sure on the exact implementation of this here, so this is just a placeholder suggestion
+        const comicInfo = (await getData("comics", comicId)).result.data();
+        setComicInfo(comicInfo);
 
-        // fetchedComicData = await // >fetch comic data function here, e.g. fetchComicData(comicID)< //
-        // setComicData(fetchedComicData)
-
-        // fetchedCommentsData = await // >fetch comic data function here, e.g. fetchCommentsData(fetchedComicData.commentsRef) //
-        // setComments(fetchedCommentsData)
+        const comments = await fetchCommentsForComic(comicRef);
+        setComments(comments);
 
         setLoading(false);
       } catch (error) {
@@ -42,15 +51,20 @@ export default function ComicPage({ params }) {
         setError(error);
         setLoading(false);
       }
-    };
-    fetchData(comicID);
+    }
+    fetchComicsAndComments(comicId, comicRef);
 
-    // logic here to check if this comic belong's to the current user and set isUsersComic state, to toggle the visibility of the privacy button
-  }, [comicID]);
+    if (comicInfo.userRef === userRef) {
+      setIsUsersComic(true);
+    }
+  }, [comicId]);
 
-  function handlePrivacySetting() {
-    setComicIsPrivate(!comicIsPrivate);
-    // update database with the new privacy state
+  async function handlePrivacySetting() {
+    setComicIsPublic(!comicIsPublic);
+
+    await updateDoc(comicRef, {
+      isPublic: comicIsPublic,
+    });
   }
 
   async function handlePostComment(event) {
@@ -58,10 +72,9 @@ export default function ComicPage({ params }) {
       event.preventDefault();
       setIsPosting(true);
 
-      // get these from the logged in user
-      const displayName = "";
-      const uid = "";
-      const avatarUrl = "";
+      const displayName = authUser.displayName;
+      const uid = authUser.uid;
+      const avatarUrl = authUser.avatarUrl;
 
       // commentBody to be set in state while typing in the comment form
 
@@ -72,7 +85,7 @@ export default function ComicPage({ params }) {
         commentBody,
       };
 
-      // We also want to do some sort of posting state, the new comment should be like optimistically rendered but greyed out or something until it's confirmed to have gone through successfully and we should lock the posting function until that's completed so they don't double submit.
+      // We also want to do some sort of posting state, the new comment should be optimistically rendered but greyed out or something until it's confirmed to have gone through successfully and we should lock the posting function until that's completed so they don't double submit.
 
       // to optimistically render the new comment we can immediately add it to comments array
       // and because this is just to display feedback for the user, we can use their local time instead of the server time
@@ -86,11 +99,11 @@ export default function ComicPage({ params }) {
         ...comments,
       ]);
 
-      // lastly we update the database here, but we set the commentPostedDate to be using the server's time first
-      // await postCommentToDatabase({...newComment, commentPostedDate: >firebase date stuff here<})
+      await postCommentToComic({ authUser, comicId, ...newComment });
+
       setIsPosting(false);
     } catch (error) {
-      // this means the comment failed, so let's remove the optimistically rendered comment from the comments state
+      // Comment failed: remove optimistically rendered comment from the comments state
       setComments(comments.filter((comment) => !comment.isOptimistic));
       console.log(error);
       setError(error);
