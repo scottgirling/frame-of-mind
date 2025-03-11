@@ -84,7 +84,7 @@ export default function Create() {
         if (comicRef && panelRef) {
           const comicSnapshot = await getDoc(comicRef);
           setValidComic(comicSnapshot._document ? true : false);
-          const panelSnapshot = await getDoc(comicRef);
+          const panelSnapshot = await getDoc(panelRef);
           setValidPanel(panelSnapshot._document ? true : false);
           const userSnapshot = await getDoc(userRef);
           setPanelInfo(panelSnapshot.data());
