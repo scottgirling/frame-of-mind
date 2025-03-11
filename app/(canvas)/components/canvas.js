@@ -274,6 +274,7 @@ const adjustmentRequired = (type) => ["line", "rectangle"].includes(type);
 
 const Canvas = ({
   setRawDrawingData,
+  setDrawingDataUrl,
   setPanelCaption,
   panelInfo,
   parsedDrawingData,
@@ -281,7 +282,7 @@ const Canvas = ({
   const [elements, setElements, undo, redo] = useHistory([], setRawDrawingData); // Setting initial history state to an empty array
 
   const [action, setAction] = useState("none");
-  const [tool, setTool] = useState("text");
+  const [tool, setTool] = useState("selection");
   const [selectedElement, setSelectedElement] = useState(null);
   const [color, setColor] = useState("000000"); // Default pen color
   const [xOffset, setxOffset] = useState(0);
@@ -310,12 +311,20 @@ const Canvas = ({
     setElements(parsedDrawingData, true, true);
   }, []);
 
+  const refCanvas = useRef(null);
+  useLayoutEffect(() => {
+    const dataUrl = refCanvas.current.toDataURL();
+    setDrawingDataUrl(dataUrl);
+  }, [elements]);
+
   //used LayoutEffect is called after component is fully rendered to ensure the DOM is updated before performing drawing actions
   useLayoutEffect(() => {
     //havent really looked too much into this. I think its pretty much boilerplate stuff
     const canvas = document.getElementById("canvas");
     const context = canvas.getContext("2d");
     context.clearRect(0, 0, canvas.width, canvas.height);
+
+    setDrawingDataUrl(canvas.toDataURL());
 
     //passes the HTML canvas element into rough.js
     const roughCanvas = rough.canvas(canvas);
@@ -485,9 +494,13 @@ const Canvas = ({
 
   // set canvas size
   const refCanvasContainer = useRef(null);
-  const [size, setSize] = useState(0);
+  const [size, setSize] = useState(400);
   useEffect(() => {
-    setSize(refCanvasContainer.current.clientHeight);
+    setSize(
+      refCanvasContainer.current.clientHeight > 400
+        ? refCanvasContainer.current.clientHeight
+        : 400
+    );
   }, [refCanvasContainer]);
 
   useEffect(() => {
@@ -603,6 +616,7 @@ const Canvas = ({
           />
         ) : null}
         <canvas
+          ref={refCanvas}
           id="canvas"
           height={size}
           width={size}

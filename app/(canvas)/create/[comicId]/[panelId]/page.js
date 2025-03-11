@@ -52,6 +52,7 @@ export default function Create() {
   const [validPanel, setValidPanel] = useState(null);
 
   const [rawDrawingData, setRawDrawingData] = useState([]);
+  const [drawingDataUrl, setDrawingDataUrl] = useState(null);
   const [panelCaption, setPanelCaption] = useState("");
   const [tempPanelCaption, setTempPanelCaption] = useState("");
   const [isPanelCaptionSubmitted, setIsPanelCaptionSubmitted] = useState(false);
@@ -138,6 +139,7 @@ export default function Create() {
 
       await updateDoc(panelRef, {
         rawDrawingDataString,
+        drawingDataUrl,
         isInProgress: false,
         panelCaption,
       });
@@ -315,6 +317,7 @@ export default function Create() {
         >
           <Canvas
             setRawDrawingData={setRawDrawingData}
+            setDrawingDataUrl={setDrawingDataUrl}
             setPanelCaption={setPanelCaption}
             panelInfo={panelInfo}
             parsedDrawingData={
@@ -327,7 +330,9 @@ export default function Create() {
           <Box component="form" sx={{ m: "auto", mb: 5 }}>
             {isPanelCaptionSubmitted ? (
               <>
-                <Typography sx={{ textAlign: "center", m: "auto", ml: 5, mr: 5 }}>
+                <Typography
+                  sx={{ textAlign: "center", m: "auto", ml: 5, mr: 5 }}
+                >
                   Panel Caption: {panelCaption}
                 </Typography>
                 <Box sx={{ display: "flex" }}>
@@ -362,7 +367,9 @@ export default function Create() {
                   slotProps={{ htmlInput: { maxLength: 140 } }}
                   multiline
                   variant="outlined"
-                  helperText={`Add a description of what's happening in your panel. ${charLimit - charCount} characters remaining.`}
+                  helperText={`Add a description of what's happening in your panel. ${
+                    charLimit - charCount
+                  } characters remaining.`}
                   value={tempPanelCaption}
                   onChange={(event) => {
                     setTempPanelCaption(event.target.value);
