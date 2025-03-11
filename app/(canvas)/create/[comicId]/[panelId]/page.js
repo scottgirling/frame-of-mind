@@ -288,6 +288,12 @@ export default function Create() {
             setRawDrawingData={setRawDrawingData}
             setPanelCaption={setPanelCaption}
             panelInfo={panelInfo}
+            parsedDrawingData={
+              panelInfo.rawDrawingDataString &&
+              panelInfo.rawDrawingDataString.length > 0
+                ? JSON.parse(panelInfo.rawDrawingDataString)
+                : []
+            }
           />
           <Box component="form" sx={{ m: "auto", mb: 5 }}>
             {isPanelCaptionSubmitted ? (
