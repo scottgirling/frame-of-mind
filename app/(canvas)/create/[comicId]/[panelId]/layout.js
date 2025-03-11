@@ -3,13 +3,9 @@ import { auth } from "@/lib/firebase";
 import { Box, CircularProgress } from "@mui/material";
 import { useAuthState } from "react-firebase-hooks/auth";
 import NotLoggedIn from "@/app/components/authentication/NotLoggedIn";
-import { useEffect } from "react";
 
 export default function CanvasLayout({ children }) {
   const [authUser, loading] = useAuthState(auth);
-  useEffect(() => {
-    console.log(loading);
-  }, []);
   if (loading) return <CircularProgress />;
   if (authUser) {
     return (

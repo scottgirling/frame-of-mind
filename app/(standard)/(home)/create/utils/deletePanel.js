@@ -24,6 +24,7 @@ export default async function deletePanel(uid, comicId, panelId) {
     } else {
       await updateDoc(comicRef, {
         panels: arrayRemove(panelRef),
+        isInProgress: false,
       });
     }
   } catch (error) {

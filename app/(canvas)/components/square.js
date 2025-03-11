@@ -22,7 +22,6 @@ function createSquare(x1, y1, x2, y2) {
 export default function Square() {
   const [drawing, setDrawing] = useState(false);
   const [elements, setElements] = useState([]);
-  console.log(elements);
 
   useEffect(() => {
     const canvas = document.getElementById("canvas");

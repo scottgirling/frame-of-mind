@@ -4,7 +4,6 @@ import { doc, serverTimestamp } from "firebase/firestore";
 import addPanelToComic from "./addPanelToComic.js";
 import { comicTheme } from "./inspireMeGenerator.js";
 
-
 export default async function createNewComic(uid, isSolo) {
   const userRef = doc(db, "users", uid);
   const { result } = await addDataWithAutoID("comics", {
@@ -19,7 +18,6 @@ export default async function createNewComic(uid, isSolo) {
     isInProgress: true,
     panels: [],
   });
-  console.log(result.id, "<-- this is the new comic id");
   const comicId = result.id;
   const panelId = await addPanelToComic(uid, result.id, isSolo);
   return [comicId, panelId];

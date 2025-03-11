@@ -22,7 +22,7 @@ export default async function fetchExistingComics(uid, isSolo) {
       )
     : query(
         collection(db, "comics"),
-        where("createdBy", "==", userRef),
+        where("createdBy", "!=", userRef),
         where("isSolo", "==", isSolo),
         where("isCompleted", "==", false),
         where("isInProgress", "==", false),
