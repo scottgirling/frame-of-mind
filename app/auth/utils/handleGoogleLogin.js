@@ -1,3 +1,4 @@
+import getData from "@/app/firestore/getData";
 import { auth, db, provider } from "@/lib/firebase";
 import { signInWithPopup } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
