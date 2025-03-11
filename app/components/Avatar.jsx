@@ -10,6 +10,6 @@ export default function Avatar({ sx }) {
         bgcolor: "primary.light",
         color: "primary.main",
       }}
-    />
+    ></MuiAvatar>
   );
 }
