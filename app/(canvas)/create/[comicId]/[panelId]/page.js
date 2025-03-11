@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
-import Canvas from "../components/canvas";
+import Canvas from "@/app/(canvas)/components/canvas";
 import TopBar from "@/app/components/TopBar";
 import Avatar from "@/app/components/Avatar";
 import {
@@ -14,6 +14,7 @@ import {
   Typography,
   Tooltip,
   TextField,
+  CircularProgress,
 } from "@mui/material";
 import { auth, db } from "@/lib/firebase";
 import {
@@ -30,30 +31,33 @@ import { inspireMeGenerator } from "@/app/(standard)/(home)/create/utils/inspire
 import getData from "@/app/firestore/getData";
 import { useParams, useRouter } from "next/navigation";
 import { FloppyDiskBack, Trash } from "@phosphor-icons/react/dist/ssr";
-import { inspireMeGenerator } from "@/app/(standard)/(home)/setup/utils/inspireMeGenerator";
-import getData from "@/app/firestore/getData";
 
 export default function Create() {
+  const { comicId, panelId } = useParams();
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+
+  const [authUser] = useAuthState(auth);
+  const [userRef, setUserRef] = useState(null);
+  const [userInfo, setUserInfo] = useState(null);
+
+  const [comicRef, setComicRef] = useState(null);
+  const [panelRef, setPanelRef] = useState(null);
+  const [comicInfo, setComicInfo] = useState(null);
+  const [comicTheme, setComicTheme] = useState(null);
+  const [panelInfo, setPanelInfo] = useState(null);
+
+  const [validComic, setValidComic] = useState(null);
+  const [validPanel, setValidPanel] = useState(null);
+
+  const [rawDrawingData, setRawDrawingData] = useState([]);
+  const [panelCaption, setPanelCaption] = useState("");
+
+  const [inspireMe, setInspireMe] = useState("");
+
   const [openCheckDialog, setOpenCheckDialog] = useState(false);
   const [dialogAction, setDialogAction] = useState("");
   const [openConfirmationDialog, setOpenConfirmationDialog] = useState(false);
-  const [rawDrawingData, setRawDrawingData] = useState([]);
-  const [panelCaption, setPanelCaption] = useState("");
-  const [inspireMe, setInspireMe] = useState("");
-  const [comicTheme, setComicTheme] = useState(null);
-  // Pass setPanelCaption into canvas too?
-  const { comicId, panelId } = useParams();
-  const [authUser] = useAuthState(auth);
-  const router = useRouter();
-
-  const [userRef, setUserRef] = useState(null);
-  const comicRef = doc(db, "comics", comicId);
-  const panelRef = doc(db, "panels", panelId);
-  const [validComic, setValidComic] = useState(null);
-  const [validPanel, setValidPanel] = useState(null);
-  const [panelInfo, setPanelInfo] = useState(null);
-  const [comicInfo, setComicInfo] = useState(null);
-  const [userInfo, setUserInfo] = useState(null);
 
   useEffect(() => {
     currentComicTheme();
@@ -66,19 +70,34 @@ export default function Create() {
   }, [authUser]);
 
   useEffect(() => {
+    setLoading(true);
+    if (comicId && panelId) {
+      const comicRef = doc(db, "comics", comicId);
+      const panelRef = doc(db, "panels", panelId);
+      setPanelRef(panelRef);
+      setComicRef(comicRef);
+    }
+  }, [comicId, panelId]);
+  useEffect(() => {
     async function checkIds() {
-      const comicSnapshot = await getDoc(comicRef);
-      setValidComic(comicSnapshot._document ? true : false);
-      const panelSnapshot = await getDoc(comicRef);
-      setValidPanel(panelSnapshot._document ? true : false);
-      const userSnapshot = await getDoc(userRef);
-
-      setPanelInfo(panelSnapshot.data());
-      setComicInfo(comicSnapshot.data());
-      setUserInfo(userSnapshot.data());
+      try {
+        if (comicRef && panelRef) {
+          const comicSnapshot = await getDoc(comicRef);
+          setValidComic(comicSnapshot._document ? true : false);
+          const panelSnapshot = await getDoc(comicRef);
+          setValidPanel(panelSnapshot._document ? true : false);
+          const userSnapshot = await getDoc(userRef);
+          setPanelInfo(panelSnapshot.data());
+          setComicInfo(comicSnapshot.data());
+          setUserInfo(userSnapshot.data());
+          setLoading(false);
+        }
+      } catch (error) {
+        setLoading(false);
+      }
     }
     checkIds();
-  }, [comicId, panelId]);
+  }, [comicRef, panelRef]);
 
   async function handleDiscard() {
     if (!comicId || !panelId) return;
@@ -184,74 +203,75 @@ export default function Create() {
   };
 
   async function currentComicTheme() {
-    const comicTheme = (
-      await getData("comics", "eh2ZYR7ZS9Uh6MMnd5YS")
-    ).result.data().comicTheme;
+    const comicTheme = (await getData("comics", comicId)).result.data()
+      .comicTheme;
     setComicTheme(comicTheme);
   }
 
+  if (loading) return <CircularProgress />;
+
   if (validComic && validPanel) {
-    <>
-      <TopBar
-        components={
-          <>
+    return (
+      <>
+        <TopBar
+          components={
+            <>
               <Typography variant="h2" sx={{ fontSize: "1.3rem", ml: "auto" }}>
                 Comic theme: {comicTheme}
               </Typography>
-            <Button
-              sx={{ ml: "auto", mr: 0.5 }}
-              variant="outlined"
-              onClick={() => {
-                setDialogAction("discard");
-                setOpenCheckDialog(true);
-              }}
-            >
-              <Trash />
-            </Button>
-            <Button
-              sx={{ ml: 0.5, mr: 0.5 }}
-              variant="outlined"
-              onClick={() => {
-                handleSave();
-              }}
-            >
-              <FloppyDiskBack />
-            </Button>
-            <Button
-              sx={{ ml: 0.5, mr: 2 }}
-              variant="contained"
-              onClick={() => {
-                setDialogAction("submit");
-                setOpenCheckDialog(true);
-              }}
-            >
-              Submit
-            </Button>
-            <Avatar />
-          </>
-        }
-      />
+              <Button
+                sx={{ ml: "auto", mr: 0.5 }}
+                variant="outlined"
+                onClick={() => {
+                  setDialogAction("discard");
+                  setOpenCheckDialog(true);
+                }}
+              >
+                <Trash />
+              </Button>
+              <Button
+                sx={{ ml: 0.5, mr: 0.5 }}
+                variant="outlined"
+                onClick={() => {
+                  handleSave();
+                }}
+              >
+                <FloppyDiskBack />
+              </Button>
+              <Button
+                sx={{ ml: 0.5, mr: 2 }}
+                variant="contained"
+                onClick={() => {
+                  setDialogAction("submit");
+                  setOpenCheckDialog(true);
+                }}
+              >
+                Submit
+              </Button>
+              <Avatar />
+            </>
+          }
+        />
 
-
-      <Tooltip
-        title="Need some inspiration or not sure where to start? An idea is only a click away!"
-        arrow
-        placement="right"
-      >
-        <Button
-          variant="contained"
-          sx={{ m: "auto", mt: 2 }}
-          onClick={() => {
-            setInspireMe(inspireMeGenerator());
-          }}
+        <Tooltip
+          title="Need some inspiration or not sure where to start? An idea is only a click away!"
+          arrow
+          placement="right"
         >
-          Inspire Me
-        </Button>
-      </Tooltip>
+          <Button
+            variant="contained"
+            sx={{ m: "auto", mt: 2 }}
+            onClick={() => {
+              setInspireMe(inspireMeGenerator());
+            }}
+          >
+            Inspire Me
+          </Button>
+        </Tooltip>
 
-      {inspireMe && (
-        <Typography sx={{ m: "auto", mt: 2 }}>Try... {inspireMe}</Typography>
-      )}
+        {inspireMe && (
+          <Typography sx={{ m: "auto", mt: 2 }}>Try... {inspireMe}</Typography>
+        )}
 
         <Box
           component={"main"}
@@ -264,7 +284,7 @@ export default function Create() {
           }}
         >
           <Canvas
-            setRawDrawingData={setRawDrawingData} 
+            setRawDrawingData={setRawDrawingData}
             setPanelCaption={setPanelCaption}
             panelInfo={panelInfo}
           />
@@ -376,6 +396,7 @@ export default function Create() {
           </Dialog>
         </Box>
       </>
-    );}
+    );
+  }
   return <>Invalid comic/panel</>;
 }
