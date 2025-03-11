@@ -176,21 +176,48 @@ export default function CreateComicPage() {
   // }
 
   return (
-    <Box component={"section"}>
-      <p>Choose your gameplay modes below!</p>
-      <Box>
-        Solo
+    <Box
+      component={"section"}
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+        gap: 3,
+        p: 3,
+      }}
+    >
+      <Typography variant="h6">Choose your gameplay modes below!</Typography>
+      <Box
+        variant="body1"
+        sx={{
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 1.5,
+        }}
+      >
+        <Typography>Solo</Typography>
         <Switch
           onClick={() => {
             setIsSolo(!isSolo);
           }}
         />
-        Team
+        <Typography>Team</Typography>
       </Box>
-      <Box>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          width: "50%",
+          gap: 1.5,
+        }}
+      >
         <Button
           variant="contained"
-          sx={{ ml: 1, mr: 1 }}
+          sx={{ flexGrow: 1 }}
           onClick={() => {
             if (isSolo) {
               setShowExistingComics(true);
@@ -209,19 +236,22 @@ export default function CreateComicPage() {
         >
           Continue existing comic
         </Button>
+        <Typography variant="body1" sx={{ ml: 1, mr: 1 }}>
+          or
+        </Typography>
         <Button
           variant="contained"
-          sx={{ ml: 1, mr: 1 }}
+          sx={{ flexGrow: 1 }}
           onClick={handleNewComicClick}
         >
-          New comic
+          Start a new comic
         </Button>
       </Box>
       <Box>
         {loading && <CircularProgress />}
         {error && <p>{error}</p>}
         {!loading && showExistingComics && isSolo && (
-          <div>
+          <Box sx={{ display: "flex", flexDirection: "column" }}>
             {existingComics.length === 0 ? (
               <Typography variant="body1">
                 No existing comics found. Start a new one by clicking the new
@@ -242,7 +272,7 @@ export default function CreateComicPage() {
                 );
               })
             )}
-          </div>
+          </Box>
         )}
       </Box>
       <Dialog open={openDialog} onClose={handleDialogClose}>

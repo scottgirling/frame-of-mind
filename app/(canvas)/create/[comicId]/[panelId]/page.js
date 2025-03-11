@@ -46,6 +46,7 @@ export default function Create() {
   const [comicInfo, setComicInfo] = useState(null);
   const [comicTheme, setComicTheme] = useState(null);
   const [panelInfo, setPanelInfo] = useState(null);
+  const [showPreviousPanels, setShowPreviousPanels] = useState(false);
 
   const [validComic, setValidComic] = useState(null);
   const [validPanel, setValidPanel] = useState(null);
@@ -253,6 +254,34 @@ export default function Create() {
             </>
           }
         />
+        <Box
+          sx={{
+            mt: "1.25rem",
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: "center",
+            alignItems: "center",
+            gap: 2,
+          }}
+        >
+          <Typography variant="body1">
+            You are drawing panel {comicInfo.panels.length}
+          </Typography>
+          {comicInfo.panels.length > 1 && (
+            <Button
+              variant="contained"
+              onClick={() => setShowPreviousPanels(true)}
+            >
+              Show previous panels?
+            </Button>
+          )}
+          {showPreviousPanels && (
+            <Box>
+              {/* To do: Set up a PreviousPanels component which shows the images of each panel which can be enlarged onClick/hover? */}
+              {/* <PreviousPanels comicInfo={comicInfo} /> */}
+            </Box>
+          )}
+        </Box>
 
         <Tooltip
           title="Need some inspiration or not sure where to start? An idea is only a click away!"
