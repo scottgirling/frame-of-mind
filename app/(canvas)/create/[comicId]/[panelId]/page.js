@@ -52,7 +52,10 @@ export default function Create() {
 
   const [rawDrawingData, setRawDrawingData] = useState([]);
   const [panelCaption, setPanelCaption] = useState("");
-
+  const [tempPanelCaption, setTempPanelCaption] = useState("");
+  const [isPanelCaptionSubmitted, setIsPanelCaptionSubmitted] = useState(false);
+  const [charCount, setCharCount] = useState(0);
+  const charLimit = 140;
   const [inspireMe, setInspireMe] = useState("");
 
   const [openCheckDialog, setOpenCheckDialog] = useState(false);
@@ -287,27 +290,65 @@ export default function Create() {
             panelInfo={panelInfo}
           />
           <Box component="form" sx={{ m: "auto", mb: 5 }}>
-            {panelCaption ? (
-              <Typography>Panel Caption: {panelCaption}</Typography>
+            {isPanelCaptionSubmitted ? (
+              <>
+                <Typography sx={{ textAlign: "center", m: "auto", ml: 5, mr: 5 }}>
+                  Panel Caption: {panelCaption}
+                </Typography>
+                <Box sx={{ display: "flex" }}>
+                  <Button
+                    variant="outlined"
+                    sx={{ width: 160, m: "auto", mt: 2, mr: 1 }}
+                    onClick={() => {
+                      setIsPanelCaptionSubmitted(false);
+                    }}
+                  >
+                    Edit Caption
+                  </Button>
+                  <Button
+                    variant="contained"
+                    sx={{ width: 160, m: "auto", mt: 2, ml: 1 }}
+                    onClick={() => {
+                      setIsPanelCaptionSubmitted(false);
+                      setPanelCaption("");
+                      setTempPanelCaption("");
+                      setCharCount(0);
+                    }}
+                  >
+                    Remove Caption
+                  </Button>
+                </Box>
+              </>
             ) : (
-              <TextField
-                id="outlined-basic"
-                label="Panel Caption"
-                variant="outlined"
-                required
-                helperText="Add a description of what's happening in your panel"
-                onBlur={(event) => setPanelCaption(event.target.value)}
-              />
+              <>
+                <TextField
+                  id="outlined-multiline-flexible"
+                  label="Panel Caption"
+                  slotProps={{ htmlInput: { maxLength: 140 } }}
+                  multiline
+                  variant="outlined"
+                  helperText={`Add a description of what's happening in your panel. ${charLimit - charCount} characters remaining.`}
+                  value={tempPanelCaption}
+                  onChange={(event) => {
+                    setTempPanelCaption(event.target.value);
+                    setCharCount(event.target.value.length);
+                  }}
+                />
+                <Button
+                  variant="contained"
+                  sx={{ m: 1.25 }}
+                  onClick={() => {
+                    setIsPanelCaptionSubmitted(true);
+                    setPanelCaption(tempPanelCaption);
+                  }}
+                >
+                  Save Caption
+                </Button>
+              </>
             )}
           </Box>
-          <Button
-            variant="contained"
-            sx={{ m: "auto", mt: 2 }}
-            onClick={() => setPanelCaption("")}
-          >
-            Remove Panel Caption
-          </Button>
         </Box>
+
         <Box>
           <Dialog open={openCheckDialog} onClose={handleDialogClose}>
             <DialogTitle>
