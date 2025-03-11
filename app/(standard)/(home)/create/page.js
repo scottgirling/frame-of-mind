@@ -171,9 +171,9 @@ export default function CreateComicPage() {
     }
   }
 
-  if (!authUser) {
-    return <NotLoggedIn />;
-  }
+  // if (!authUser) {
+  //   return <NotLoggedIn />;
+  // }
 
   return (
     <Box component={"section"}>
