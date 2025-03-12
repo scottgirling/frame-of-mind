@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import fetchCompletedComics from "../utils/fetchCompletedComics";
 import fetchComicPanel from "../utils/fetchComicPanel";
+import { FilterBar } from "./FilterBar";
 
 import {
   Button,
@@ -16,6 +17,17 @@ export default function Community() {
   const [comics, setComics] = useState([]);
 
   console.log(comics, "<======COMICS");
+
+  const [filteredComics, setFilteredComics] = useState([]);
+  const [filters, setFilters] = useState({
+    sortBy: "completedAt",
+    showMyComics: false,
+    comicType: "all",
+  });
+
+  const handleFilterChange = (newFilters) => {
+    setFilters(newFilters);
+  };
 
   useEffect(() => {
     async function fetchData() {
@@ -32,6 +44,29 @@ export default function Community() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    if (comics.length > 0) {
+      const sortedAndFilteredComics = [...comics].sort((comicA, comicB) => {
+        switch (filters.sortBy) {
+          case "likes":
+            return (comicB.comicLikes || 0) - (comicA.comicLikes || 0);
+          case "theme":
+            return (comicA.comicTheme || "").localeCompare(
+              comicB.comicTheme || ""
+            );
+          case "completedAt":
+          default:
+            return (
+              comicB.createdAt.toDate().getTime() -
+              comicA.createdAt.toDate().getTime()
+            );
+        }
+      });
+
+      setFilteredComics(sortedAndFilteredComics);
+    }
+  }, [comics, filters]);
+
   return (
     <>
       <ButtonGroup sx={{ mb: 2, gap: 0.5, justifyContent: "center" }}>
@@ -43,7 +78,7 @@ export default function Community() {
           Create
         </Button>
       </ButtonGroup>
-
+      <FilterBar onFilterChange={handleFilterChange} />
       <Typography variant="h3" sx={{ textAlign: "center" }}>
         Community
       </Typography>
@@ -52,7 +87,7 @@ export default function Community() {
       </Typography>
 
       <Grid2 container spacing={3} sx={{ justifyContent: "center" }}>
-        {comics.map((comic) => (
+        {filteredComics.map((comic) => (
           <Grid2 key={comic.id}>
             <Box
               component="img"
