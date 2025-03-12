@@ -21,7 +21,5 @@ export default async function fetchCommentsForComic(comicRef) {
     ...doc.data(),
   }));
 
-  console.log("Comments: ", comments);
-
   return comments;
 }
