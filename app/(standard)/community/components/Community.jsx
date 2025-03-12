@@ -13,11 +13,13 @@ import {
   Box,
 } from "@mui/material";
 
+
 export default function Community() {
   const [comics, setComics] = useState([]);
 
   console.log(comics, "<======COMICS");
-
+ // const [typeFilteredComics, setTypeFilteredComics] = useState([]);
+  const [sortedComics, setSortedComics] = useState([]); 
   const [filteredComics, setFilteredComics] = useState([]);
   const [filters, setFilters] = useState({
     sortBy: "completedAt",
@@ -67,6 +69,24 @@ export default function Community() {
     }
   }, [comics, filters]);
 
+  useEffect(() => {
+    if (sortedComics.length > 0) {
+      const filtered = sortedComics.filter((comic) => {
+        switch (filters.comicType) {
+          case "solo":
+            return comic.isSolo === true;  //show solo comics
+          case "team":
+            return comic.isSolo === false; //show team comics
+          case "all":
+          default:
+            return true;  //show all comics
+        }
+      });
+      setFilteredComics(filtered);
+    }
+  }, [sortedComics, filters.comicType]);
+ 
+
   return (
     <>
       <ButtonGroup sx={{ mb: 2, gap: 0.5, justifyContent: "center" }}>
@@ -78,7 +98,7 @@ export default function Community() {
           Create
         </Button>
       </ButtonGroup>
-      <FilterBar onFilterChange={handleFilterChange} />
+      <FilterBar onFilterChange={handleFilterChange} filters={filters}/>
       <Typography variant="h3" sx={{ textAlign: "center" }}>
         Community
       </Typography>

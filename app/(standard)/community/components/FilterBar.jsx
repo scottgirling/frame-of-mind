@@ -78,11 +78,15 @@ export function FilterBar({ onFilterChange, userId }) {
           onChange={handleComicTypeToggle}
           aria-label="comic type"
         >
+         
           <ToggleButton value="solo" aria-label="show solo comics">
             Solo
           </ToggleButton>
           <ToggleButton value="team" aria-label="show team comics">
             Team
+          </ToggleButton>
+          <ToggleButton value="all" aria-label="show all comics">
+            All
           </ToggleButton>
         </ToggleButtonGroup>
       </Toolbar>
