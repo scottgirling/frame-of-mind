@@ -10,6 +10,7 @@ const defaultTheme = createTheme();
 const defaultShadows = [...defaultTheme.shadows];
 const theme = createTheme({
   typography: {
+    fontSize: 17,
     fontFamily: font.style.fontFamily,
     body1: {
       fontWeight: 400,
@@ -34,6 +35,14 @@ const theme = createTheme({
     light: {
       main: "#FEF7FF",
       light: "#FFFFFF",
+      dark: "#9C85D1",
+      contrastText: "#6750A4",
+    },
+    green: {
+      main: "#98D949",
+      light: "#DAFFB5",
+      dark: "#71A53D",
+      contrastText: "#31570b",
     },
   },
 });
