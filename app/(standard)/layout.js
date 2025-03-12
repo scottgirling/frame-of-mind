@@ -1,7 +1,6 @@
 import { Box } from "@mui/material";
 import TopBar from "../components/TopBar";
 import BottomBar from "../components/BottomBar";
-import Avatar from "../components/Avatar";
 import UserMenu from "../components/UserMenu";
 
 export default function StandardLayout({ children }) {
