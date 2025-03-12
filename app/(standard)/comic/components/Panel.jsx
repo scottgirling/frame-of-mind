@@ -32,6 +32,8 @@ export default function Panel({ panelRef, i }) {
 
   return (
     <PaperBox
+      variant="light"
+      colour="light"
       sx={{
         width: "100%",
         textAlign: "center",
@@ -39,12 +41,10 @@ export default function Panel({ panelRef, i }) {
         transform: `rotate(${i % 2 ? 1 : -1}deg)`,
       }}
     >
-      <PaperBox
+      <Box
         component="img"
         src={panelInfo.drawingDataUrl}
         alt="Comic Panel"
-        variant="light"
-        colour="light"
         sx={{
           height: "auto",
           width: "100%",
