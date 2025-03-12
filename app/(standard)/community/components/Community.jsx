@@ -3,7 +3,14 @@ import { useEffect, useState } from "react";
 import fetchCompletedComics from "../utils/fetchCompletedComics";
 import fetchComicPanel from "../utils/fetchComicPanel";
 
-import { Button, ButtonGroup, Typography, Grid2 } from "@mui/material";
+import {
+  Button,
+  ButtonGroup,
+  Typography,
+  Grid2,
+  Card,
+  Box,
+} from "@mui/material";
 
 export default function Community() {
   const [comics, setComics] = useState([]);
@@ -44,22 +51,28 @@ export default function Community() {
         See what other users have created!
       </Typography>
 
-      <Grid2
-        container
-        spacing={3}
-        sx={{
-          justifyContent: "center",
-        }}
-      >
+      <Grid2 container spacing={3} sx={{ justifyContent: "center" }}>
         {comics.map((comic) => (
-          <div key={comic.id}>
-            <img src={comic.firstPanelImage} alt="" />
-            <Typography variant="body1">{comic.comicTheme}</Typography>
-            <Typography variant="body2">
+          <Grid2 key={comic.id}>
+            <Box
+              component="img"
+              src={comic.firstPanelImage}
+              alt={comic.comicTheme}
+              sx={{
+                height: "250px",
+              }}
+            />
+
+            <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+              {comic.comicTheme}
+            </Typography>
+            <Typography variant="body2" color="textSecondary">
               Created: {comic.createdAt.toDate().toLocaleDateString()}
             </Typography>
-            <Typography variant="body2">Likes: {comic.comicLikes}</Typography>
-          </div>
+            <Typography variant="body2" color="textSecondary">
+              Likes: {comic.comicLikes}
+            </Typography>
+          </Grid2>
         ))}
       </Grid2>
     </>
