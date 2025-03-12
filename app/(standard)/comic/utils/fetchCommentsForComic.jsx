@@ -13,13 +13,15 @@ export default async function fetchCommentsForComic(comicRef) {
   const q = query(
     collection(db, "comments"),
     where("comicRef", "==", comicRef),
-    orderBy("createdAt", "desc")
+    orderBy("commentPostedDate", "desc")
   );
   const querySnapshot = await getDocs(q);
   const comments = querySnapshot.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
   }));
+
+  console.log("Comments: ", comments);
 
   return comments;
 }
