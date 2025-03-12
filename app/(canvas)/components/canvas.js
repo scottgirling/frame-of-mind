@@ -274,7 +274,7 @@ const adjustmentRequired = (type) => ["line", "rectangle"].includes(type);
 
 const Canvas = ({
   setRawDrawingData,
-  setDrawingDataUrl,
+  refCanvas,
   setPanelCaption,
   panelInfo,
   parsedDrawingData,
@@ -311,11 +311,9 @@ const Canvas = ({
     setElements(parsedDrawingData, true, true);
   }, []);
 
-  const refCanvas = useRef(null);
-  useLayoutEffect(() => {
-    const dataUrl = refCanvas.current.toDataURL();
-    setDrawingDataUrl(dataUrl);
-  }, [elements]);
+  // useLayoutEffect(() => {
+  //   setRefCanvas(refCanvas);
+  // }, [elements]);
 
   //used LayoutEffect is called after component is fully rendered to ensure the DOM is updated before performing drawing actions
   useLayoutEffect(() => {
@@ -324,7 +322,7 @@ const Canvas = ({
     const context = canvas.getContext("2d");
     context.clearRect(0, 0, canvas.width, canvas.height);
 
-    setDrawingDataUrl(canvas.toDataURL());
+    // setDrawingDataUrl(canvas.toDataURL());
 
     //passes the HTML canvas element into rough.js
     const roughCanvas = rough.canvas(canvas);

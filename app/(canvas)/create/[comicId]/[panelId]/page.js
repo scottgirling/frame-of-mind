@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import Canvas from "@/app/(canvas)/components/canvas";
 import TopBar from "@/app/components/TopBar";
@@ -51,6 +51,7 @@ export default function Create() {
   const [validComic, setValidComic] = useState(null);
   const [validPanel, setValidPanel] = useState(null);
 
+  const refCanvas = useRef(null);
   const [rawDrawingData, setRawDrawingData] = useState([]);
   const [drawingDataUrl, setDrawingDataUrl] = useState(null);
   const [panelCaption, setPanelCaption] = useState("");
@@ -131,15 +132,17 @@ export default function Create() {
     }
   }
 
-  async function handleSubmit() {
+  async function handleSubmit(canvas) {
     try {
       if (!comicId || !panelId) return;
 
       const rawDrawingDataString = JSON.stringify(rawDrawingData);
 
+      const dataUrl = canvas.toDataURL();
+
       await updateDoc(panelRef, {
         rawDrawingDataString,
-        drawingDataUrl,
+        drawingDataUrl: dataUrl,
         isInProgress: false,
         panelCaption,
       });
@@ -218,6 +221,7 @@ export default function Create() {
   if (validComic && validPanel) {
     return (
       <>
+        {console.log(refCanvas.current)}
         <TopBar
           components={
             <>
@@ -285,7 +289,6 @@ export default function Create() {
             </Box>
           )}
         </Box>
-
         <Tooltip
           title="Need some inspiration or not sure where to start? An idea is only a click away!"
           arrow
@@ -301,11 +304,9 @@ export default function Create() {
             Inspire Me
           </Button>
         </Tooltip>
-
         {inspireMe && (
           <Typography sx={{ m: "auto", mt: 2 }}>Try... {inspireMe}</Typography>
         )}
-
         <Box
           component={"main"}
           sx={{
@@ -318,7 +319,7 @@ export default function Create() {
         >
           <Canvas
             setRawDrawingData={setRawDrawingData}
-            setDrawingDataUrl={setDrawingDataUrl}
+            refCanvas={refCanvas}
             setPanelCaption={setPanelCaption}
             panelInfo={panelInfo}
             parsedDrawingData={
@@ -391,7 +392,6 @@ export default function Create() {
             )}
           </Box>
         </Box>
-
         <Box>
           <Dialog open={openCheckDialog} onClose={handleDialogClose}>
             <DialogTitle>
@@ -428,7 +428,7 @@ export default function Create() {
                 <Button
                   onClick={() => {
                     setOpenCheckDialog(false);
-                    handleSubmit();
+                    handleSubmit(refCanvas.current);
                   }}
                 >
                   Submit
