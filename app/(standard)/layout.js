@@ -15,6 +15,7 @@ export default function StandardLayout({ children }) {
             flexDirection: "column",
             width: "100vw",
             maxWidth: "1200px",
+            minHeight: "80vh",
           }}
         >
           {children}
