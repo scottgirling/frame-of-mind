@@ -30,7 +30,7 @@ export default function Panel({ panelRef }) {
   if (!panelInfo) return <Typography>No panel data found.</Typography>;
 
   return (
-    <Box sx={{ width: "100%", margin: "auto", textAlign: "center" }}>
+    <Box sx={{ width: "100%", textAlign: "center" }}>
       <Box
         component="img"
         src={panelInfo.drawingDataUrl}
@@ -38,13 +38,18 @@ export default function Panel({ panelRef }) {
         sx={{
           height: "auto",
           width: "100%",
-          marginBottom: 1,
+          borderRadius: 3,
+          bgcolor: "white",
+          borderBottomRightRadius: 0,
+          borderBottomLeftRadius: 0,
+          justifyContent: "center",
         }}
       />
       <Box
         sx={{
           width: "100%",
           padding: 0.5,
+          mb: 1,
         }}
       >
         <Typography variant="body1">{panelInfo.panelCaption}</Typography>
