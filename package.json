@@ -18,11 +18,11 @@
     "@phosphor-icons/react": "^2.1.7",
     "next": "15.2.0",
     "perfect-freehand": "^1.2.2",
+    "primereact": "^10.9.3",
     "random-word-slugs": "^0.1.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-firebase-hooks": "^5.1.1",
-    "primereact": "^10.9.3",
     "roughjs": "^4.6.6"
   },
   "devDependencies": {
