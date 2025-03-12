@@ -4,14 +4,8 @@ import fetchCompletedComics from "../utils/fetchCompletedComics";
 import fetchComicPanel from "../utils/fetchComicPanel";
 import { FilterBar } from "./FilterBar";
 
-import {
-  Button,
-  ButtonGroup,
-  Typography,
-  Grid2 as Grid,
-  Box,
-  Link,
-} from "@mui/material";
+import { Typography, Grid2 as Grid, Box, Link } from "@mui/material";
+import PaperBox from "@/app/components/PaperBox";
 
 export default function Community() {
   const [comics, setComics] = useState([]);
@@ -85,47 +79,52 @@ export default function Community() {
 
   return (
     <>
-      {/* <ButtonGroup sx={{ mb: 2, gap: 0.5, justifyContent: "center" }}>
-        <Button href={"/"} size="large" variant="contained">
-          Home
-        </Button>
+      <PaperBox colour="light" variant="main" sx={{ p: 3, mb: 3 }}>
+        <Typography variant="h3" sx={{ textAlign: "center" }}>
+          Community
+        </Typography>
+        <Typography variant="body1" sx={{ textAlign: "center" }}>
+          See what other users have created!
+        </Typography>
+      </PaperBox>
 
-        <Button href={"/create"} size="large" variant="contained">
-          Create
-        </Button>
-      </ButtonGroup> */}
-      <Typography variant="h3" sx={{ textAlign: "center" }}>
-        Community
-      </Typography>
-      <Typography variant="body1" sx={{ textAlign: "center" }}>
-        See what other users have created!
-      </Typography>
-      <FilterBar onFilterChange={handleFilterChange} filters={filters} />
+      <PaperBox colour="light" variant="main" sx={{ p: 1 }}>
+        <FilterBar onFilterChange={handleFilterChange} filters={filters} />
+      </PaperBox>
+      <Grid
+        container
+        spacing={3}
+        columns={4}
+        sx={{ justifyContent: "center", mt: 3 }}
+      >
+        {filteredComics.map((comic, i) => (
+          <Grid
+            key={comic.id}
+            size={1}
+            sx={{ transform: `rotate(${i % 2 ? 1 : -1}deg)` }}
+          >
+            <PaperBox colour="light" variant="main" sx={{ p: 5 }}>
+              <Link href={"/comic/" + comic.id} underline="none">
+                <Box
+                  component="img"
+                  src={comic.firstPanelImage}
+                  alt={comic.comicTheme}
+                  sx={{
+                    width: "100%",
+                  }}
+                />
 
-      <Grid container spacing={3} sx={{ justifyContent: "center" }}>
-        {filteredComics.map((comic) => (
-          <Grid key={comic.id}>
-            <Link href={"/comic/" + comic.id} underline="none">
-              <Box
-                component="img"
-                src={comic.firstPanelImage}
-                alt={comic.comicTheme}
-                sx={{
-                  height: "250px",
-                  bgcolor: "white",
-                }}
-              />
-
-              <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                {comic.comicTheme}
-              </Typography>
-              <Typography variant="body2" color="textSecondary">
-                Created: {comic.createdAt.toDate().toLocaleDateString()}
-              </Typography>
-              <Typography variant="body2" color="textSecondary">
-                Likes: {comic.comicLikes}
-              </Typography>
-            </Link>
+                <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                  {comic.comicTheme}
+                </Typography>
+                <Typography variant="body2" color="textSecondary">
+                  Created: {comic.createdAt.toDate().toLocaleDateString()}
+                </Typography>
+                <Typography variant="body2" color="textSecondary">
+                  Likes: {comic.comicLikes}
+                </Typography>
+              </Link>
+            </PaperBox>
           </Grid>
         ))}
       </Grid>
