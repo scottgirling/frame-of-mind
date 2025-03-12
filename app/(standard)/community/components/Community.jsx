@@ -4,7 +4,14 @@ import fetchCompletedComics from "../utils/fetchCompletedComics";
 import fetchComicPanel from "../utils/fetchComicPanel";
 import { FilterBar } from "./FilterBar";
 
-import { Button, ButtonGroup, Typography, Grid2, Box } from "@mui/material";
+import {
+  Button,
+  ButtonGroup,
+  Typography,
+  Grid2 as Grid,
+  Box,
+  Link,
+} from "@mui/material";
 
 export default function Community() {
   const [comics, setComics] = useState([]);
@@ -95,30 +102,32 @@ export default function Community() {
         See what other users have created!
       </Typography>
 
-      <Grid2 container spacing={3} sx={{ justifyContent: "center" }}>
+      <Grid container spacing={3} sx={{ justifyContent: "center" }}>
         {filteredComics.map((comic) => (
-          <Grid2 key={comic.id}>
-            <Box
-              component="img"
-              src={comic.firstPanelImage}
-              alt={comic.comicTheme}
-              sx={{
-                height: "250px",
-              }}
-            />
+          <Grid key={comic.id}>
+            <Link href={"/comic/" + comic.id} underline="none">
+              <Box
+                component="img"
+                src={comic.firstPanelImage}
+                alt={comic.comicTheme}
+                sx={{
+                  height: "250px",
+                }}
+              />
 
-            <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-              {comic.comicTheme}
-            </Typography>
-            <Typography variant="body2" color="textSecondary">
-              Created: {comic.createdAt.toDate().toLocaleDateString()}
-            </Typography>
-            <Typography variant="body2" color="textSecondary">
-              Likes: {comic.comicLikes}
-            </Typography>
-          </Grid2>
+              <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                {comic.comicTheme}
+              </Typography>
+              <Typography variant="body2" color="textSecondary">
+                Created: {comic.createdAt.toDate().toLocaleDateString()}
+              </Typography>
+              <Typography variant="body2" color="textSecondary">
+                Likes: {comic.comicLikes}
+              </Typography>
+            </Link>
+          </Grid>
         ))}
-      </Grid2>
+      </Grid>
     </>
   );
 }

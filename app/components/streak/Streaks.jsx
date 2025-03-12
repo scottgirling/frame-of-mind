@@ -1,8 +1,8 @@
 import { Box } from "@mui/material";
 import { useEffect, useState } from "react";
-import DayStreak from "./DayStreak";
-import StreakFire from "./StreakFire";
 import WeekStreak from "./WeekStreak";
+import StreakFire from "./StreakFire";
+import DayStreak from "./DayStreak";
 import getData from "@/app/firestore/getData";
 
 export default function Streaks({ user, rotation }) {

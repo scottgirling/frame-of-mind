@@ -1,8 +1,9 @@
-import { Grid2 as Grid, Typography } from "@mui/material";
+import { Box, Grid2 as Grid, Typography } from "@mui/material";
 import Streaks from "@/app/components/streak/Streaks";
 import PaperButton from "@/app/components/PaperButton";
 import { PaintBrush } from "@phosphor-icons/react/dist/ssr";
 import PaperBox from "@/app/components/PaperBox";
+import { Palette } from "@phosphor-icons/react";
 
 export default function HomePage({ user }) {
   return (
@@ -13,15 +14,29 @@ export default function HomePage({ user }) {
       >
         Welcome back {user.displayName}!
       </Typography>
-      <PaperButton
-        href={"/create"}
-        variant="green"
-        margin={{ mx: "auto", mb: 5 }}
-        sx={{ fontSize: "3rem", pr: 5, pl: 4, pt: 0 }}
-      >
-        <PaintBrush style={{ marginRight: ".5rem", marginTop: ".5rem" }} />{" "}
-        Create
-      </PaperButton>
+      <Box sx={{ mx: "auto" }}>
+        <PaperButton
+          href={"/create"}
+          variant="green"
+          margin={{ mx: 1, mb: 5 }}
+          sx={{ fontSize: "3rem", pr: 5, pl: 4, pt: 0 }}
+          rotation={2}
+        >
+          <PaintBrush style={{ marginRight: ".5rem", marginTop: ".5rem" }} />{" "}
+          Create
+        </PaperButton>
+
+        <PaperButton
+          href={"/community"}
+          variant="primary"
+          margin={{ mx: 1, mb: 5 }}
+          sx={{ fontSize: "3rem", pr: 5, pl: 4, pt: 0 }}
+          rotation={-1}
+        >
+          <Palette style={{ marginRight: ".5rem", marginTop: ".5rem" }} />{" "}
+          Community
+        </PaperButton>
+      </Box>
       <Grid container spacing={2}>
         <Grid size={{ md: 6 }}>
           <Streaks user={user} />
