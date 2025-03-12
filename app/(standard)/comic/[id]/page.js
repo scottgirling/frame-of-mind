@@ -1,11 +1,16 @@
 "use client";
 import { use, useEffect, useState } from "react";
-import CommentsList from "../components/CommentsList";
-import { Box } from "@mui/material";
+import { Box, CircularProgress, Typography } from "@mui/material";
 import { useMediaQuery } from "react-responsive";
+import CommentsList from "../components/CommentsList";
 import ComicGrid from "../components/ComicGrid";
+import CommentForm from "../components/CommentForm";
 import fetchCommentsForComic from "../utils/fetchCommentsForComic";
 import getData from "@/app/firestore/getData";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth, db } from "@/lib/firebase";
+import { doc } from "firebase/firestore";
+import postCommentToComic from "../utils/postCommentToComic";
 
 export default function ComicPage({ params }) {
   const comicId = use(params).id;
@@ -54,9 +59,9 @@ export default function ComicPage({ params }) {
     }
     fetchComicsAndComments(comicId, comicRef);
 
-    if (comicInfo.userRef === userRef) {
-      setIsUsersComic(true);
-    }
+    // if (comicInfo.userRef === userRef) {
+    //   setIsUsersComic(true);
+    // }
   }, [comicId]);
 
   async function handlePrivacySetting() {
@@ -74,7 +79,7 @@ export default function ComicPage({ params }) {
 
       const displayName = authUser.displayName;
       const uid = authUser.uid;
-      const avatarUrl = authUser.avatarUrl;
+      // const avatarUrl = authUser.avatarUrl;
 
       // commentBody to be set in state while typing in the comment form
 
@@ -111,10 +116,28 @@ export default function ComicPage({ params }) {
     }
   }
 
+  // Function to handle comment form
+
+  if (loading) return <CircularProgress />;
+  if (error) return <Typography>Error loading comic.</Typography>;
+  if (!comicInfo) return <Typography>No comic data found.</Typography>;
+
   return (
     <>
-      <ComicGrid />
+      <Typography
+        variant="h1"
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          fontSize: "2rem",
+          mb: 2,
+        }}
+      >
+        {comicInfo?.comicTheme}
+      </Typography>
+      <ComicGrid panels={comicInfo?.panels} />
       <hr />
+      <CommentForm />
       <CommentsList />
     </>
   );
