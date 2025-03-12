@@ -85,7 +85,7 @@ export default function Community() {
 
   return (
     <>
-      <ButtonGroup sx={{ mb: 2, gap: 0.5, justifyContent: "center" }}>
+      {/* <ButtonGroup sx={{ mb: 2, gap: 0.5, justifyContent: "center" }}>
         <Button href={"/"} size="large" variant="contained">
           Home
         </Button>
@@ -93,14 +93,14 @@ export default function Community() {
         <Button href={"/create"} size="large" variant="contained">
           Create
         </Button>
-      </ButtonGroup>
-      <FilterBar onFilterChange={handleFilterChange} filters={filters} />
+      </ButtonGroup> */}
       <Typography variant="h3" sx={{ textAlign: "center" }}>
         Community
       </Typography>
       <Typography variant="body1" sx={{ textAlign: "center" }}>
         See what other users have created!
       </Typography>
+      <FilterBar onFilterChange={handleFilterChange} filters={filters} />
 
       <Grid container spacing={3} sx={{ justifyContent: "center" }}>
         {filteredComics.map((comic) => (
@@ -112,6 +112,7 @@ export default function Community() {
                 alt={comic.comicTheme}
                 sx={{
                   height: "250px",
+                  bgcolor: "white",
                 }}
               />
 
