@@ -1,15 +1,23 @@
 "use client";
+import { auth } from "@/lib/firebase";
 import { Favorite, FavoriteBorder } from "@mui/icons-material";
 /** @jsxImportSource @emotion/react */
 import {
   Avatar,
   Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   IconButton,
   keyframes,
   Link,
   Typography,
 } from "@mui/material";
+import { Trash } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
+import { useAuthState } from "react-firebase-hooks/auth";
 
 export default function Comment({
   comment: {
@@ -19,13 +27,28 @@ export default function Comment({
     commentPostedDate,
     likes,
     isOptimistic,
+    userRef,
   },
+  commentId,
+  handleDeleteComment,
 }) {
+  const [authUser] = useAuthState(auth);
+  const [isUsersComment, setIsUsersComment] = useState(false);
+  const [openDialog, setOpenDialog] = useState(false);
+
   const [dateTime, setDateTime] = useState(null);
   const [timestamp, setTimestamp] = useState(null);
 
   const [hasBeenLiked, setHasBeenLiked] = useState(false);
   const [commentLikes, setCommentLikes] = useState(likes);
+
+  useEffect(() => {
+    if (authUser && userRef) {
+      if (authUser.uid === userRef.id) {
+        setIsUsersComment(true);
+      }
+    }
+  }, [authUser]);
 
   useEffect(() => {
     // prevent hydration errors by handling date formatting in a useEffect
@@ -45,13 +68,24 @@ export default function Comment({
     }
   }, [commentPostedDate, isOptimistic]);
 
-  const handleLikeClick = () => {
+  function handleLikeClick() {
     setHasBeenLiked((prev) => !prev);
 
     setCommentLikes((prevLikes) =>
       hasBeenLiked ? prevLikes - 1 : prevLikes + 1
     );
-  };
+  }
+
+  function handleDeleteClick() {
+    if (isUsersComment) {
+      handleDeleteComment(commentId);
+      setOpenDialog(true);
+    }
+  }
+
+  function handleCloseDialog() {
+    setOpenDialog(false);
+  }
 
   // const pulse = keyframes`0% {
   //   opacity: 0.8;
@@ -117,12 +151,29 @@ export default function Comment({
           sx={{
             bgcolor: "primary.light",
             borderRadius: 2,
+            display: "flex",
             flexGrow: 1,
+            justifyContent: "space-between",
             p: 2,
             mr: 2,
           }}
         >
-          <Typography variant="body1">{commentBody}</Typography>
+          <Typography
+            variant="body1"
+            sx={{
+              flexGrow: 1,
+            }}
+          >
+            {commentBody}
+          </Typography>
+          {isUsersComment && (
+            <Button
+              onClick={handleDeleteClick}
+              sx={{ p: 0, fontSize: "1.2rem" }}
+            >
+              <Trash />
+            </Button>
+          )}
         </Box>
         <Box
           sx={{
@@ -143,6 +194,15 @@ export default function Comment({
           <Typography variant="body2">Likes: {commentLikes}</Typography>
         </Box>
       </Box>
+      <Dialog open={openDialog} onClose={handleCloseDialog}>
+        <DialogTitle>Success</DialogTitle>
+        <DialogContent>
+          <Typography>Comment successfully deleted!</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog}>Dismiss</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
