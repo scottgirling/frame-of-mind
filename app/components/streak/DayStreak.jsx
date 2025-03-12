@@ -6,8 +6,14 @@ export default function DayStreak({ dayStreak }) {
 
   return (
     <>
-      <Typography>Your daily streak:</Typography>
-      <Box sx={{ display: "flex", gap: 1 }}>
+      <Typography sx={{ textAlign: "center" }}>Your daily streak:</Typography>
+      <Box
+        sx={{
+          display: "flex",
+          gap: 1,
+          justifyContent: "center",
+        }}
+      >
         {daysArray.map((day, i) => {
           return (
             <Avatar key={day} sx={i < dayStreak ? { bgcolor: "green" } : null}>
