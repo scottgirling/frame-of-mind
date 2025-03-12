@@ -1,6 +1,17 @@
 "use client";
 import { use, useEffect, useState } from "react";
-import { Box, CircularProgress, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Switch,
+  Typography,
+} from "@mui/material";
 import { useMediaQuery } from "react-responsive";
 import CommentsList from "../components/CommentsList";
 import ComicGrid from "../components/ComicGrid";
@@ -9,9 +20,11 @@ import fetchCommentsForComic from "../utils/fetchCommentsForComic";
 import getData from "@/app/firestore/getData";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, db } from "@/lib/firebase";
-import { doc } from "firebase/firestore";
+import { deleteDoc, doc, updateDoc } from "firebase/firestore";
 import postCommentToComic from "../utils/postCommentToComic";
 import getUserInfo from "../utils/getUserInfo";
+import { Trash } from "@phosphor-icons/react";
+import { useRouter } from "next/navigation";
 
 export default function ComicPage({ params }) {
   const comicId = use(params).id;
@@ -19,6 +32,7 @@ export default function ComicPage({ params }) {
     query: "(max-width: 600px)",
   });
 
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -32,11 +46,13 @@ export default function ComicPage({ params }) {
   const [comicIsPublic, setComicIsPublic] = useState(false);
 
   const [comments, setComments] = useState([]);
-  const [commentBody, setCommentBody] = useState("");
   const [isPosting, setIsPosting] = useState(false);
 
+  const [openDialog, setOpenDialog] = useState(false);
+  const [commentToDelete, setCommentToDelete] = useState(null);
+
   useEffect(() => {
-    if (authUser) {
+    if (authUser && !userInfo) {
       const userRef = doc(db, "users", authUser.uid);
       setUserRef(userRef);
 
@@ -55,6 +71,7 @@ export default function ComicPage({ params }) {
 
         const comicInfo = (await getData("comics", comicId)).result.data();
         setComicInfo(comicInfo);
+        setComicIsPublic(comicInfo.isPublic);
 
         const comments = await fetchCommentsForComic(comicRef);
         setComments(comments);
@@ -67,53 +84,63 @@ export default function ComicPage({ params }) {
       }
     }
     fetchComicsAndComments(comicId, comicRef);
-
-    // if (comicInfo.createdBy === userRef) {
-    //   setIsUsersComic(true);
-    // }
   }, [comicId]);
 
+  useEffect(() => {
+    if (comicInfo && userRef && comicInfo.createdBy) {
+      if (comicInfo.createdBy.id === userRef.id) {
+        setIsUsersComic(true);
+      } else {
+        setIsUsersComic(false);
+      }
+    }
+  }, [comicInfo, userRef]);
+
   async function handlePrivacySetting() {
-    setComicIsPublic(!comicIsPublic);
+    if (!isUsersComic) return;
+
+    const newIsPublic = !comicIsPublic;
+    setComicIsPublic(newIsPublic);
 
     await updateDoc(comicRef, {
-      isPublic: comicIsPublic,
+      isPublic: newIsPublic,
     });
   }
 
-  async function handlePostComment(event) {
+  async function handlePostComment(event, commentBody) {
     try {
       event.preventDefault();
       setIsPosting(true);
 
-      // commentBody to be set in state while typing in the comment form
+      if (!userRef || !userInfo) setLoading(true);
 
       const newComment = {
-        uid: authUser.uid,
         userRef,
         comicRef,
         displayName: userInfo.displayName,
         avatarUrl: userInfo.avatarUrl,
+        commentPostedDate: "Posting in progress...",
         likes: 0,
         commentBody,
       };
+      // Could alternatively use commentPostedDate: Date.now(),
 
-      // We also want to do some sort of posting state, the new comment should be optimistically rendered but greyed out or something until it's confirmed to have gone through successfully and we should lock the posting function until that's completed so they don't double submit.
-
-      // to optimistically render the new comment we can immediately add it to comments array
-      // and because this is just to display feedback for the user, we can use their local time instead of the server time
-      // also adding the isOptimistic flag so we can distinguish it from comments fetched from the database
       setComments([
         {
           ...newComment,
-          commentPostedDate: Date.now(),
           isOptimistic: true,
         },
         ...comments,
       ]);
 
-      await postCommentToComic({ authUser, comicId, ...newComment });
-
+      const postedComment = await postCommentToComic({ ...newComment });
+      setComments((prevComments) => {
+        return prevComments.map((comment) =>
+          comment.isOptimistic && comment.commentBody === newComment.commentBody
+            ? { ...postedComment, isOptimistic: false }
+            : comment
+        );
+      });
       setIsPosting(false);
     } catch (error) {
       // Comment failed: remove optimistically rendered comment from the comments state
@@ -124,7 +151,35 @@ export default function ComicPage({ params }) {
     }
   }
 
-  // Function to handle comment form
+  async function handleDeleteComment(commentId) {
+    try {
+      await deleteDoc(doc(db, "comments", commentId));
+      setComments(comments.filter((comment) => comment.id !== commentId));
+    } catch (error) {
+      console.log(error);
+      setError("Error deleting comment");
+    }
+  }
+
+  function handleOpenDialog() {
+    setOpenDialog(true);
+  }
+
+  function handleCloseDialog() {
+    setOpenDialog(false);
+  }
+
+  async function handleDeleteComic() {
+    try {
+      await deleteDoc(comicRef);
+      router.push("/");
+      // Notify user of deletion and redirect to my comics?
+    } catch (error) {
+      console.log(error);
+      setError("Error deleting comic");
+    }
+    setOpenDialog(false);
+  }
 
   if (loading) return <CircularProgress />;
   if (error) return <Typography>Error loading comic.</Typography>;
@@ -132,21 +187,86 @@ export default function ComicPage({ params }) {
 
   return (
     <>
-      <Typography
-        variant="h1"
+      <Box
         sx={{
           display: "flex",
-          justifyContent: "center",
-          fontSize: "2rem",
+          alignItems: "center",
+          width: "100%",
           mb: 2,
+          position: "relative",
         }}
       >
-        {comicInfo?.comicTheme}
-      </Typography>
+        {isUsersComic && (
+          <Button
+            onClick={handleOpenDialog}
+            sx={{
+              position: "absolute",
+              left: 0,
+              top: 0,
+              fontSize: "1.7rem",
+            }}
+          >
+            <Trash />
+          </Button>
+        )}
+        <Typography
+          variant="h1"
+          sx={{
+            flexGrow: 1,
+            textAlign: "center",
+            fontSize: "2rem",
+          }}
+        >
+          {comicInfo?.comicTheme}
+        </Typography>
+
+        {comicInfo.isSolo && isUsersComic && (
+          <Box
+            variant="body1"
+            sx={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 1,
+              position: "absolute",
+              right: 0,
+            }}
+          >
+            <Typography>Private</Typography>
+            <Switch
+              checked={comicIsPublic}
+              onClick={() => {
+                handlePrivacySetting();
+              }}
+            />
+            <Typography>Public</Typography>
+          </Box>
+        )}
+      </Box>
       <ComicGrid panels={comicInfo?.panels} />
       <hr />
-      <CommentForm />
-      <CommentsList />
+      <Typography variant="h6" sx={{ mt: 2 }}>
+        Comments:
+      </Typography>
+      <CommentForm handlePostComment={handlePostComment} />
+      <CommentsList
+        comments={comments}
+        handleDeleteComment={handleDeleteComment}
+      />
+
+      <Dialog open={openDialog} onClose={handleCloseDialog}>
+        <DialogTitle>Delete Comic?</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete this comic? This action is
+            irreversible.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button onClick={handleDeleteComic}>Delete</Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 }
