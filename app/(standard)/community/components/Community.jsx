@@ -1,17 +1,22 @@
 "use client";
 import { useEffect, useState } from "react";
 import fetchCompletedComics from "../utils/fetchCompletedComics";
-import { doc } from "firebase/firestore";
+import fetchComicPanel from "../utils/fetchComicPanel";
 
 import { Button, ButtonGroup, Typography } from "@mui/material";
 
 export default function Community() {
   const [comics, setComics] = useState([]);
-  const [comicPanels, setComicPanels] = useState([]);
 
   useEffect(() => {
     async function fetchData() {
       const data = await fetchCompletedComics();
+
+      for (const comic of data) {
+        const firstPanelImage = await fetchComicPanel(comic.panels[0]);
+        comic.firstPanelImage = firstPanelImage;
+      }
+
       setComics(data);
     }
     fetchData();
@@ -35,11 +40,11 @@ export default function Community() {
       <div>
         {comics.map((comic) => (
           <div key={comic.id}>
+            <img src={comic.firstPanelImage} alt="" />
             <Typography variant="body1">{comic.comicTheme}</Typography>
             <Typography variant="body2">
               Created: {comic.createdAt.toDate().toLocaleDateString()}
             </Typography>
-            {/* <img src="" alt="" /> */}
           </div>
         ))}
       </div>
