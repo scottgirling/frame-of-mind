@@ -1,9 +1,9 @@
 "use client";
+import Avatar from "@/app/components/Avatar";
+import PaperBox from "@/app/components/PaperBox";
 import { auth } from "@/lib/firebase";
-import { Favorite, FavoriteBorder } from "@mui/icons-material";
 /** @jsxImportSource @emotion/react */
 import {
-  Avatar,
   Box,
   Button,
   Dialog,
@@ -11,11 +11,9 @@ import {
   DialogContent,
   DialogTitle,
   IconButton,
-  keyframes,
-  Link,
   Typography,
 } from "@mui/material";
-import { Trash } from "@phosphor-icons/react";
+import { Heart, Trash } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 
@@ -109,22 +107,15 @@ export default function Comment({
         }}
       >
         <Avatar
-          src={
-            typeof avatarUrl === "string" && avatarUrl.length > 0
-              ? avatarUrl
-              : undefined
-          }
+          avatarUrl={avatarUrl}
+          displayName={displayName}
           sx={{
             border: 2,
             borderColor: "primary.emphasis",
             bgcolor: "primary.light",
             color: "primary.main",
           }}
-        >
-          {typeof avatarUrl === "string" && avatarUrl.length === 0
-            ? displayName[0]
-            : null}
-        </Avatar>
+        />
         <Box>
           {/* <Link href={"/profile/" + uid} underline="hover"> */}
           <Typography variant="body1">{displayName || "Unknown"}</Typography>
@@ -147,9 +138,9 @@ export default function Comment({
           alignItems: "center",
         }}
       >
-        <Box
+        <PaperBox
+          margin={{ flexGrow: 1 }}
           sx={{
-            bgcolor: "primary.light",
             borderRadius: 2,
             display: "flex",
             flexGrow: 1,
@@ -174,7 +165,7 @@ export default function Comment({
               <Trash />
             </Button>
           )}
-        </Box>
+        </PaperBox>
         <Box
           sx={{
             display: "flex",
@@ -184,14 +175,25 @@ export default function Comment({
             mr: 1,
           }}
         >
-          <IconButton onClick={handleLikeClick}>
+          <IconButton onClick={handleLikeClick} disabled={isUsersComment}>
             {hasBeenLiked ? (
-              <Favorite sx={{ color: "red" }} />
+              <Heart weight="duotone" style={{ color: "red" }} />
             ) : (
-              <FavoriteBorder sx={{ color: "gray" }} />
+              <Heart sx={{ color: "gray" }} />
             )}
           </IconButton>
-          <Typography variant="body2">Likes: {commentLikes}</Typography>
+          <Typography variant="body2">
+            Likes:{" "}
+            <span
+              style={{
+                display: "inline-block",
+                width: "2ch",
+                textAlign: "center",
+              }}
+            >
+              {commentLikes}
+            </span>
+          </Typography>
         </Box>
       </Box>
       <Dialog open={openDialog} onClose={handleCloseDialog}>

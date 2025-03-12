@@ -1,8 +1,9 @@
 import { Box, CircularProgress, Typography } from "@mui/material";
 import getPanelInfo from "../utils/getPanelInfo";
 import { useEffect, useState } from "react";
+import PaperBox from "@/app/components/PaperBox";
 
-export default function Panel({ panelRef }) {
+export default function Panel({ panelRef, i }) {
   const [panelInfo, setPanelInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -30,19 +31,26 @@ export default function Panel({ panelRef }) {
   if (!panelInfo) return <Typography>No panel data found.</Typography>;
 
   return (
-    <Box sx={{ width: "100%", textAlign: "center" }}>
-      <Box
+    <PaperBox
+      sx={{
+        width: "100%",
+        textAlign: "center",
+        p: 1,
+        transform: `rotate(${i % 2 ? 1 : -1}deg)`,
+      }}
+    >
+      <PaperBox
         component="img"
         src={panelInfo.drawingDataUrl}
         alt="Comic Panel"
+        variant="light"
+        colour="light"
         sx={{
           height: "auto",
           width: "100%",
-          borderRadius: 3,
           bgcolor: "white",
-          borderBottomRightRadius: 0,
-          borderBottomLeftRadius: 0,
-          justifyContent: "center",
+          mx: "auto",
+          imageRendering: "smooth",
         }}
       />
       <Box
@@ -54,6 +62,6 @@ export default function Panel({ panelRef }) {
       >
         <Typography variant="body1">{panelInfo.panelCaption}</Typography>
       </Box>
-    </Box>
+    </PaperBox>
   );
 }

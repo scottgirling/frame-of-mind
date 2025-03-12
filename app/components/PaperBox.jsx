@@ -9,6 +9,8 @@ export default function PaperBox({
   rotation = 0,
   borderSize = 3,
   children,
+  component,
+  src,
 }) {
   const theme = useTheme();
   const bgcolor = hexToRgb(theme.palette[colour][variant]);
@@ -16,6 +18,8 @@ export default function PaperBox({
   return (
     <Box sx={{ ...margin }}>
       <Box
+        component={component}
+        src={src}
         sx={{
           bgcolor: bgcolor,
           rotate: rotation + "deg",
