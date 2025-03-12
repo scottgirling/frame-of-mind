@@ -25,6 +25,7 @@ import postCommentToComic from "../utils/postCommentToComic";
 import getUserInfo from "../utils/getUserInfo";
 import { Trash } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
+import PaperBox from "@/app/components/PaperBox";
 
 export default function ComicPage({ params }) {
   const comicId = use(params).id;
@@ -187,72 +188,81 @@ export default function ComicPage({ params }) {
 
   return (
     <>
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          width: "100%",
-          mb: 2,
-          position: "relative",
-        }}
-      >
-        {isUsersComic && (
-          <Button
-            onClick={handleOpenDialog}
-            sx={{
-              position: "absolute",
-              left: 0,
-              top: 0,
-              fontSize: "1.7rem",
-            }}
-          >
-            <Trash />
-          </Button>
-        )}
-        <Typography
-          variant="h1"
+      <PaperBox colour="light" sx={{ p: 5 }} margin={{ my: 4 }} borderSize={15}>
+        <Box
           sx={{
-            flexGrow: 1,
-            textAlign: "center",
-            fontSize: "2rem",
+            display: "flex",
+            alignItems: "center",
+            width: "100%",
+            mb: 2,
+            position: "relative",
           }}
         >
-          {comicInfo?.comicTheme}
-        </Typography>
-
-        {comicInfo.isSolo && isUsersComic && (
-          <Box
-            variant="body1"
-            sx={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 1,
-              position: "absolute",
-              right: 0,
-            }}
-          >
-            <Typography>Private</Typography>
-            <Switch
-              checked={comicIsPublic}
-              onClick={() => {
-                handlePrivacySetting();
+          {isUsersComic && (
+            <Button
+              onClick={handleOpenDialog}
+              sx={{
+                position: "absolute",
+                left: 0,
+                top: 0,
+                fontSize: "1.7rem",
               }}
-            />
-            <Typography>Public</Typography>
-          </Box>
-        )}
-      </Box>
-      <ComicGrid panels={comicInfo?.panels} />
-      <hr />
-      <Typography variant="h6" sx={{ mt: 2 }}>
-        Comments:
-      </Typography>
-      <CommentForm handlePostComment={handlePostComment} />
-      <CommentsList
-        comments={comments}
-        handleDeleteComment={handleDeleteComment}
-      />
+            >
+              <Trash />
+            </Button>
+          )}
+          <PaperBox
+            sx={{ px: 3, py: 1 }}
+            margin={{ mx: "auto" }}
+            borderSize={1}
+          >
+            <Typography
+              variant="h1"
+              sx={{
+                flexGrow: 1,
+                textAlign: "center",
+                fontSize: "2rem",
+              }}
+            >
+              {comicInfo?.comicTheme}
+            </Typography>
+          </PaperBox>
+
+          {comicInfo.isSolo && isUsersComic && (
+            <Box
+              variant="body1"
+              sx={{
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 1,
+                position: "absolute",
+                right: 0,
+              }}
+            >
+              <Typography>Private</Typography>
+              <Switch
+                checked={comicIsPublic}
+                onClick={() => {
+                  handlePrivacySetting();
+                }}
+              />
+              <Typography>Public</Typography>
+            </Box>
+          )}
+        </Box>
+        <ComicGrid panels={comicInfo?.panels} />
+      </PaperBox>
+      <PaperBox colour="light" sx={{ p: 5 }} margin={{ my: 4 }} borderSize={15}>
+        <Typography variant="h6" sx={{ mt: 2 }}>
+          Comments:
+        </Typography>
+        <CommentForm handlePostComment={handlePostComment} />
+        <CommentsList
+          comments={comments}
+          handleDeleteComment={handleDeleteComment}
+        />
+      </PaperBox>
 
       <Dialog open={openDialog} onClose={handleCloseDialog}>
         <DialogTitle>Delete Comic?</DialogTitle>
