@@ -151,6 +151,7 @@ export default function Create() {
         isInProgress: false,
       });
 
+      const userData = (await getData("users", authUser.uid)).result.data();
       const comicSnapshot = await getDoc(comicRef);
       if (comicSnapshot.data().panels.length === 8) {
         await updateDoc(comicRef, {
@@ -160,18 +161,19 @@ export default function Create() {
         await updateDoc(userRef, {
           myComics: arrayUnion(comicRef),
         });
+      }
+      const now = Timestamp.now().toMillis();
+      const yesterdayDate = now - 24 * 60 * 60 * 1000;
+      const today = new Date(now).getDate();
+      const yesterday = new Date(yesterdayDate).getDate();
+      const contributedDay = new Date(
+        userData.lastContributedAt.toMillis()
+      ).getDate();
 
-        await updateDoc(userRef, {
-          lastContributedAt: serverTimestamp(),
-        });
-
-        const now = Timestamp.now().toMillis();
-        const yesterdayDate = now - 24 * 60 * 60 * 1000;
-        const today = new Date(now).getDate();
-        const yesterday = new Date(yesterdayDate).getDate();
-        const userData = (await getData("users", authUser.uid)).result.data();
-        const lastContributedMillis = userData.lastContributedAt.toMillis();
-        const currentDayStreak = userData.dayStreak;
+      console.log(today, contributedDay);
+      const lastContributedMillis = userData.lastContributedAt.toMillis();
+      const currentDayStreak = userData.dayStreak;
+      if (contributedDay !== today) {
         if (
           now - lastContributedMillis < 48 * 60 * 60 * 1000 &&
           today === yesterday + 1
@@ -187,7 +189,6 @@ export default function Create() {
             weekStreak: 0,
           });
         }
-
         if (currentDayStreak === 6) {
           await updateDoc(userRef, {
             weekStreak: increment(1),
@@ -195,6 +196,9 @@ export default function Create() {
         }
       }
 
+      await updateDoc(userRef, {
+        lastContributedAt: serverTimestamp(),
+      });
       setDialogAction("submit");
       setOpenConfirmationDialog(true);
 
@@ -221,7 +225,6 @@ export default function Create() {
   if (validComic && validPanel) {
     return (
       <>
-        {console.log(refCanvas.current)}
         <TopBar
           components={
             <>
