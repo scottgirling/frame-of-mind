@@ -188,71 +188,71 @@ export default function ComicPage({ params }) {
 
   return (
     <>
-      <PaperBox colour="light" sx={{ p: 5 }} margin={{ my: 4 }} borderSize={15}>
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            width: "100%",
-            mb: 2,
-            position: "relative",
-          }}
-        >
-          {isUsersComic && (
-            <Button
-              onClick={handleOpenDialog}
-              sx={{
-                position: "absolute",
-                left: 0,
-                top: 0,
-                fontSize: "1.7rem",
-              }}
-            >
-              <Trash />
-            </Button>
-          )}
-          <PaperBox
-            sx={{ px: 3, py: 1 }}
-            margin={{ mx: "auto" }}
-            borderSize={1}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          width: "100%",
+          mb: 2,
+          position: "relative",
+        }}
+      >
+        {isUsersComic && (
+          <Button
+            onClick={handleOpenDialog}
+            sx={{
+              position: "absolute",
+              left: 0,
+              top: 0,
+              fontSize: "1.7rem",
+            }}
           >
-            <Typography
-              variant="h1"
-              sx={{
-                flexGrow: 1,
-                textAlign: "center",
-                fontSize: "2rem",
-              }}
-            >
-              {comicInfo?.comicTheme}
-            </Typography>
-          </PaperBox>
+            <Trash />
+          </Button>
+        )}
+        <PaperBox
+          sx={{ px: 3, py: 1 }}
+          margin={{ mx: "auto" }}
+          borderSize={1}
+          variant="light"
+          colour="light"
+        >
+          <Typography
+            variant="h1"
+            sx={{
+              flexGrow: 1,
+              textAlign: "center",
+              fontSize: "2rem",
+            }}
+          >
+            {comicInfo?.comicTheme}
+          </Typography>
+        </PaperBox>
 
-          {comicInfo.isSolo && isUsersComic && (
-            <Box
-              variant="body1"
-              sx={{
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 1,
-                position: "absolute",
-                right: 0,
+        {comicInfo.isSolo && isUsersComic && (
+          <Box
+            variant="body1"
+            sx={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 1,
+              position: "absolute",
+              right: 0,
+            }}
+          >
+            <Typography>Private</Typography>
+            <Switch
+              checked={comicIsPublic}
+              onClick={() => {
+                handlePrivacySetting();
               }}
-            >
-              <Typography>Private</Typography>
-              <Switch
-                checked={comicIsPublic}
-                onClick={() => {
-                  handlePrivacySetting();
-                }}
-              />
-              <Typography>Public</Typography>
-            </Box>
-          )}
-        </Box>
-        <ComicGrid panels={comicInfo?.panels} />
-      </PaperBox>
+            />
+            <Typography>Public</Typography>
+          </Box>
+        )}
+      </Box>
+      <ComicGrid panels={comicInfo?.panels} />
       <PaperBox colour="light" sx={{ p: 5 }} margin={{ my: 4 }} borderSize={15}>
         <Typography variant="h6" sx={{ mt: 2 }}>
           Comments:
