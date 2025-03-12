@@ -21,12 +21,14 @@ import fetchExistingComics from "./utils/fetchExistingComics";
 import fetchInProgressPanels from "./utils/fetchInProgressPanels";
 import filterYesterdaysComics from "./utils/filterYesterdaysComics";
 import deletePanel from "./utils/deletePanel";
-import NotLoggedIn from "@/app/components/authentication/NotLoggedIn";
+import PaperBox from "@/app/components/PaperBox";
+import PaperButton from "@/app/components/PaperButton";
 
 export default function CreateComicPage() {
   const router = useRouter();
   const [authUser] = useAuthState(auth);
   const [loading, setLoading] = useState(false);
+  const [fetchingExistingComics, setFetchingExistingComics] = useState(false);
   const [error, setError] = useState(null);
   const [isSolo, setIsSolo] = useState(true);
   const [showExistingComics, setShowExistingComics] = useState(false);
@@ -44,7 +46,7 @@ export default function CreateComicPage() {
   // Fetch the panels in progress + existing comics
   useEffect(() => {
     if (authUser) {
-      setLoading(true);
+      setFetchingExistingComics(true);
       Promise.all([
         fetchInProgressPanels(authUser.uid, isSolo),
         fetchExistingComics(authUser.uid, isSolo),
@@ -53,7 +55,7 @@ export default function CreateComicPage() {
           setPanelsInProgress(panels);
           setExistingComics(comics);
         })
-        .finally(() => setLoading(false));
+        .finally(() => setFetchingExistingComics(false));
     }
   }, [authUser, isSolo]);
 
@@ -139,6 +141,8 @@ export default function CreateComicPage() {
 
   // Dialog: Continue drawing on the selected comic
   function handleContinueDrawing() {
+    setLoading(true);
+    setOpenDialog(true);
     if (selectedComic) {
       const panelForComic = panelsInProgress.find((panel) => {
         return panel.comicRef.id === selectedComic.id;
@@ -159,11 +163,18 @@ export default function CreateComicPage() {
     });
     if (panelForComic) {
       try {
-        await deletePanel(authUser.uid, selectedComic.id, panelForComic.id);
-
-        setPanelsInProgress((prev) =>
-          prev.filter((panel) => panel.id !== panelForComic.id)
+        await deletePanel(
+          authUser.uid,
+          selectedComic.id,
+          panelForComic.id,
+          false
         );
+        const panelId = await addPanelToComic(
+          authUser.uid,
+          selectedComic.id,
+          isSolo
+        );
+        router.push("/create/" + selectedComic.id + "/" + panelId);
         setOpenDialog(false);
       } catch (error) {
         console.error("Error deleting panel:", error);
@@ -174,50 +185,75 @@ export default function CreateComicPage() {
   // if (!authUser) {
   //   return <NotLoggedIn />;
   // }
+  if (loading) return;
+  <PaperBox
+    colour="light"
+    variant="main"
+    margin={{ m: "auto" }}
+    sx={{
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "center",
+      alignItems: "center",
+      gap: 3,
+      px: 6,
+      py: 4,
+      pb: 2,
+    }}
+  >
+    <CircularProgress />
+  </PaperBox>;
 
   return (
-    <Box
-      component={"section"}
+    <PaperBox
+      colour="light"
+      variant="main"
+      margin={{ m: "auto" }}
       sx={{
         display: "flex",
         flexDirection: "column",
         justifyContent: "center",
         alignItems: "center",
         gap: 3,
-        p: 3,
+        px: 6,
+        py: 4,
+        pb: 2,
       }}
     >
-      <Typography variant="h6">Choose your gameplay modes below!</Typography>
-      <Box
+      <Typography variant="h1" fontSize={30}>
+        Choose your gameplay mode below!
+      </Typography>
+      <Typography
         variant="body1"
         sx={{
           display: "flex",
           flexDirection: "row",
           alignItems: "center",
           gap: 1.5,
+          fontSize: 30,
         }}
       >
-        <Typography>Solo</Typography>
+        Solo
         <Switch
           onClick={() => {
             setIsSolo(!isSolo);
           }}
         />
-        <Typography>Team</Typography>
-      </Box>
+        Team
+      </Typography>
       <Box
         sx={{
           display: "flex",
           flexDirection: "row",
           alignItems: "center",
-          justifyContent: "space-between",
+          justifyContent: "center",
           width: "50%",
           gap: 1.5,
         }}
       >
-        <Button
-          variant="contained"
-          sx={{ flexGrow: 1 }}
+        <PaperButton
+          variant="primary"
+          sx={{ fontSize: 20, textWrap: "nowrap" }}
           onClick={() => {
             if (isSolo) {
               setShowExistingComics(true);
@@ -235,20 +271,17 @@ export default function CreateComicPage() {
           }}
         >
           Continue existing comic
-        </Button>
-        <Typography variant="body1" sx={{ ml: 1, mr: 1 }}>
-          or
-        </Typography>
-        <Button
-          variant="contained"
-          sx={{ flexGrow: 1 }}
+        </PaperButton>
+        <PaperButton
+          variant="primary"
+          sx={{ fontSize: 20, textWrap: "nowrap" }}
           onClick={handleNewComicClick}
         >
           Start a new comic
-        </Button>
+        </PaperButton>
       </Box>
       <Box>
-        {loading && <CircularProgress />}
+        {fetchingExistingComics && showExistingComics && <CircularProgress />}
         {error && <p>{error}</p>}
         {!loading && showExistingComics && isSolo && (
           <Box sx={{ display: "flex", flexDirection: "column" }}>
@@ -289,6 +322,6 @@ export default function CreateComicPage() {
           <Button onClick={handleDiscardPanel}>Discard Panel</Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </PaperBox>
   );
 }

@@ -1,11 +1,24 @@
-import { Box, Button, ButtonGroup } from "@mui/material";
+"use client";
+/** @jsxImportSource @emotion/react */
+import {
+  Avatar,
+  Box,
+  css,
+  Button,
+  ButtonGroup,
+  ClickAwayListener,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import { visuallyHidden } from "@mui/utils";
 import {
   ArrowArcLeft,
   ArrowArcRight,
+  ArrowsClockwise,
   BoundingBox,
   Cursor,
   Eraser,
+  Lightbulb,
   PaintBucket,
   Pencil,
   TextAa,
@@ -15,6 +28,7 @@ import getStroke from "perfect-freehand";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import rough from "roughjs/bundled/rough.esm";
 import { ColorPicker } from "primereact/colorpicker";
+import { inspireMeGenerator } from "@/app/(standard)/(home)/create/utils/inspireMeGenerator";
 
 //rough.js tool for generating shapes
 const generator = rough.generator();
@@ -275,6 +289,7 @@ const adjustmentRequired = (type) => ["line", "rectangle"].includes(type);
 const Canvas = ({
   setRawDrawingData,
   refCanvas,
+  fileButtons,
   setPanelCaption,
   panelInfo,
   parsedDrawingData,
@@ -572,16 +587,84 @@ const Canvas = ({
     }
   };
 
+  const [openInspireMe, setOpenInspireMe] = useState(false);
+  const [inspireMe, setInspireMe] = useState(inspireMeGenerator());
+
+  const handleTooltipClose = () => {
+    setOpenInspireMe(false);
+  };
+
+  const handleTooltipOpen = () => {
+    setOpenInspireMe(true);
+  };
+
   return (
     <>
-      <ButtonGroup sx={{ mx: "auto", my: 2 }}>
-        <Button variant="outlined" onClick={undo}>
-          <ArrowArcLeft size={20} /> <Box sx={visuallyHidden}>Undo</Box>
-        </Button>
-        <Button variant="outlined" onClick={redo}>
-          <ArrowArcRight size={20} /> <Box sx={visuallyHidden}>Redo</Box>
-        </Button>
-      </ButtonGroup>
+      <Box sx={{ display: "flex" }}>
+        <ClickAwayListener onClickAway={handleTooltipClose}>
+          <div>
+            <Tooltip
+              onClose={handleTooltipClose}
+              open={openInspireMe}
+              placement="top"
+              arrow
+              disableFocusListener
+              disableHoverListener
+              disableTouchListener
+              title={
+                <Typography
+                  variant="body1"
+                  sx={{ display: "inline-flex", alignItems: "center" }}
+                >
+                  Try... {inspireMe}
+                </Typography>
+              }
+              slotProps={{
+                popper: {
+                  disablePortal: true,
+                },
+                tooltip: {
+                  sx: { backgroundColor: "primary.dark" },
+                },
+                arrow: {
+                  sx: { color: "primary.dark" },
+                },
+              }}
+            >
+              <Avatar
+                onClick={() => {
+                  handleTooltipOpen();
+                  if (openInspireMe) {
+                    setInspireMe(inspireMeGenerator());
+                  }
+                }}
+                sx={{
+                  bgcolor: openInspireMe ? "#FFB74D" : "primary.light",
+                  color: openInspireMe ? "white" : "primary.main",
+                  mr: 0.5,
+                }}
+                css={css`
+                  :hover {
+                    opacity: 0.8;
+                    cursor: pointer;
+                  }
+                `}
+              >
+                <Lightbulb />
+              </Avatar>
+            </Tooltip>
+          </div>
+        </ClickAwayListener>
+        {fileButtons}
+        <ButtonGroup sx={{ ml: "auto", mb: 2 }}>
+          <Button variant="outlined" onClick={undo}>
+            <ArrowArcLeft size={20} /> <Box sx={visuallyHidden}>Undo</Box>
+          </Button>
+          <Button variant="outlined" onClick={redo}>
+            <ArrowArcRight size={20} /> <Box sx={visuallyHidden}>Redo</Box>
+          </Button>
+        </ButtonGroup>
+      </Box>
       <Box
         ref={refCanvasContainer}
         sx={{
@@ -626,61 +709,70 @@ const Canvas = ({
         </canvas>
       </Box>
 
-      <ButtonGroup sx={{ mx: "auto", my: 2 }}>
-        <Button
-          variant={tool === "selection" ? "contained" : "outlined"}
-          onClick={() => setTool("selection")}
-        >
-          <Cursor size={20} />
-          <Box sx={visuallyHidden}>Move and Manipulate Object Tool</Box>
-        </Button>
-        <Button
-          variant={tool === "line" ? "contained" : "outlined"}
-          onClick={() => setTool("line")}
-        >
-          <LineSegment size={20} /> <Box sx={visuallyHidden}>Line Tool</Box>
-        </Button>
-        <Button
-          variant={tool === "rectangle" ? "contained" : "outlined"}
-          onClick={() => setTool("rectangle")}
-        >
-          <BoundingBox size={20} />
-          <Box sx={visuallyHidden}>Rectangle Tool</Box>
-        </Button>
-        <Button
-          variant={tool === "pencil" ? "contained" : "outlined"}
-          onClick={() => setTool("pencil")}
-        >
-          <Pencil size={20} /> <Box sx={visuallyHidden}> Pencil tool </Box>
-        </Button>
-        <Button
-          variant={tool === "eraser" ? "contained" : "outlined"}
-          onClick={() => setTool("eraser")}
-        >
-          <Eraser size={20} /> <Box sx={visuallyHidden}> Eraser </Box>
-        </Button>
-        <Button
-          variant={tool === "text" ? "contained" : "outlined"}
-          onClick={() => setTool("text")}
-        >
-          <TextAa size={20} /> <Box sx={visuallyHidden}> Text</Box>
-        </Button>
+      <Box sx={{ mx: "auto", my: 2, display: "flex", alignItems: "center" }}>
+        <ButtonGroup>
+          <Button
+            variant={tool === "selection" ? "contained" : "outlined"}
+            onClick={() => setTool("selection")}
+          >
+            <Cursor size={20} />
+            <Box sx={visuallyHidden}>Move and Manipulate Object Tool</Box>
+          </Button>
+          <Button
+            variant={tool === "line" ? "contained" : "outlined"}
+            onClick={() => setTool("line")}
+          >
+            <LineSegment size={20} /> <Box sx={visuallyHidden}>Line Tool</Box>
+          </Button>
+          <Button
+            variant={tool === "rectangle" ? "contained" : "outlined"}
+            onClick={() => setTool("rectangle")}
+          >
+            <BoundingBox size={20} />
+            <Box sx={visuallyHidden}>Rectangle Tool</Box>
+          </Button>
+          <Button
+            variant={tool === "pencil" ? "contained" : "outlined"}
+            onClick={() => setTool("pencil")}
+          >
+            <Pencil size={20} /> <Box sx={visuallyHidden}> Pencil tool </Box>
+          </Button>
+          <Button
+            variant={tool === "eraser" ? "contained" : "outlined"}
+            onClick={() => setTool("eraser")}
+          >
+            <Eraser size={20} /> <Box sx={visuallyHidden}> Eraser </Box>
+          </Button>
+          <Button
+            variant={tool === "text" ? "contained" : "outlined"}
+            onClick={() => setTool("text")}
+          >
+            <TextAa size={20} /> <Box sx={visuallyHidden}> Text</Box>
+          </Button>
 
-        <Button
-          variant={tool === "fill" ? "contained" : "outlined"}
-          onClick={() => setTool("fill")}
-        >
-          <PaintBucket size={20} /> <Box sx={visuallyHidden}> Fill </Box>
-        </Button>
-
-        {/* Adding color picker UI */}
+          <Button
+            variant={tool === "fill" ? "contained" : "outlined"}
+            onClick={() => setTool("fill")}
+          >
+            <PaintBucket size={20} /> <Box sx={visuallyHidden}> Fill </Box>
+          </Button>
+        </ButtonGroup>
         <ColorPicker
           value={color}
+          css={css`
+            & > input {
+              width: 2rem;
+              height: 2rem;
+              border-radius: 50%;
+              border: 0;
+              margin-left: 1rem;
+            }
+          `}
           onChange={(e) => {
             setColor(e.target.value);
           }}
         />
-      </ButtonGroup>
+      </Box>
     </>
   );
 };

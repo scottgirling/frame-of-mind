@@ -1,6 +1,7 @@
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
 import { ThemeProvider } from "@mui/material/styles";
 import theme from "./theme";
+import "./global.css";
 import { Box, CssBaseline } from "@mui/material";
 
 export const metadata = {
@@ -17,11 +18,12 @@ export default function RootLayout({ children }) {
           <ThemeProvider theme={theme}>
             <Box
               sx={{
-                bgcolor: "light.main",
+                bgcolor: "primary.light",
                 color: "primary.dark",
                 display: "flex",
                 flexDirection: "column",
                 minHeight: "100vh",
+                backgroundImage: "url(/assets/pattern.png)",
               }}
             >
               {children}
