@@ -11,6 +11,7 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, db } from "@/lib/firebase";
 import { doc } from "firebase/firestore";
 import postCommentToComic from "../utils/postCommentToComic";
+import getUserInfo from "../utils/getUserInfo";
 
 export default function ComicPage({ params }) {
   const comicId = use(params).id;
@@ -23,6 +24,7 @@ export default function ComicPage({ params }) {
 
   const [authUser] = useAuthState(auth);
   const [userRef, setUserRef] = useState(null);
+  const [userInfo, setUserInfo] = useState(null);
 
   const comicRef = doc(db, "comics", comicId);
   const [comicInfo, setComicInfo] = useState(null);
@@ -35,7 +37,14 @@ export default function ComicPage({ params }) {
 
   useEffect(() => {
     if (authUser) {
-      setUserRef(doc(db, "users", authUser.uid));
+      const userRef = doc(db, "users", authUser.uid);
+      setUserRef(userRef);
+
+      async function fetchUser(authUser) {
+        const userInfo = await getUserInfo(authUser);
+        setUserInfo(userInfo);
+      }
+      fetchUser(authUser);
     }
   }, [authUser]);
 
@@ -59,7 +68,7 @@ export default function ComicPage({ params }) {
     }
     fetchComicsAndComments(comicId, comicRef);
 
-    // if (comicInfo.userRef === userRef) {
+    // if (comicInfo.createdBy === userRef) {
     //   setIsUsersComic(true);
     // }
   }, [comicId]);
@@ -77,16 +86,15 @@ export default function ComicPage({ params }) {
       event.preventDefault();
       setIsPosting(true);
 
-      const displayName = authUser.displayName;
-      const uid = authUser.uid;
-      // const avatarUrl = authUser.avatarUrl;
-
       // commentBody to be set in state while typing in the comment form
 
       const newComment = {
-        uid,
-        displayName,
-        avatarUrl,
+        uid: authUser.uid,
+        userRef,
+        comicRef,
+        displayName: userInfo.displayName,
+        avatarUrl: userInfo.avatarUrl,
+        likes: 0,
         commentBody,
       };
 
