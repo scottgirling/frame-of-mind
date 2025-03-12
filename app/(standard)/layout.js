@@ -2,11 +2,12 @@ import { Box } from "@mui/material";
 import TopBar from "../components/TopBar";
 import BottomBar from "../components/BottomBar";
 import Avatar from "../components/Avatar";
+import UserMenu from "../components/UserMenu";
 
 export default function StandardLayout({ children }) {
   return (
     <>
-      <TopBar components={<Avatar sx={{ ml: "auto" }} />} />
+      <TopBar components={<UserMenu sx={{ ml: "auto" }} />} />
       <Box component={"main"} sx={{ mx: "auto", mt: "1.25rem" }}>
         <Box
           component={"section"}

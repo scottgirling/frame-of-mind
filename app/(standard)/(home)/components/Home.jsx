@@ -1,6 +1,4 @@
-import { signOut } from "firebase/auth";
-import { auth } from "@/lib/firebase";
-import { Box, Button, Grid2 as Grid, Typography } from "@mui/material";
+import { Grid2 as Grid, Typography } from "@mui/material";
 import Streaks from "@/app/components/streak/Streaks";
 import PaperButton from "@/app/components/PaperButton";
 import { PaintBrush } from "@phosphor-icons/react/dist/ssr";
@@ -40,14 +38,6 @@ export default function HomePage({ user }) {
           </PaperBox>
         </Grid>
       </Grid>
-      <Button
-        sx={{ mt: 5, mb: -3 }}
-        onClick={() => {
-          signOut(auth);
-        }}
-      >
-        Sign out
-      </Button>
     </>
   );
 }
