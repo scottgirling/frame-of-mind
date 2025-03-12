@@ -1,6 +1,6 @@
 "use client";
 import { use, useEffect, useState } from "react";
-import { Box, CircularProgress, Typography } from "@mui/material";
+import { Box, CircularProgress, Switch, Typography } from "@mui/material";
 import { useMediaQuery } from "react-responsive";
 import CommentsList from "../components/CommentsList";
 import ComicGrid from "../components/ComicGrid";
@@ -32,11 +32,11 @@ export default function ComicPage({ params }) {
   const [comicIsPublic, setComicIsPublic] = useState(false);
 
   const [comments, setComments] = useState([]);
-  const [commentBody, setCommentBody] = useState("");
+  // const [commentBody, setCommentBody] = useState("");
   const [isPosting, setIsPosting] = useState(false);
 
   useEffect(() => {
-    if (authUser) {
+    if (authUser && !userInfo) {
       const userRef = doc(db, "users", authUser.uid);
       setUserRef(userRef);
 
@@ -73,7 +73,19 @@ export default function ComicPage({ params }) {
     // }
   }, [comicId]);
 
+  useEffect(() => {
+    if (comicInfo && userRef && comicInfo.createdBy) {
+      if (comicInfo.createdBy === userRef) {
+        setIsUsersComic(true);
+      } else {
+        setIsUsersComic(false);
+      }
+    }
+  }, [comicInfo, userRef]);
+
   async function handlePrivacySetting() {
+    if (!isUsersComic) return;
+
     setComicIsPublic(!comicIsPublic);
 
     await updateDoc(comicRef, {
@@ -81,38 +93,47 @@ export default function ComicPage({ params }) {
     });
   }
 
-  async function handlePostComment(event) {
+  async function handlePostComment(event, commentBody) {
     try {
       event.preventDefault();
       setIsPosting(true);
 
-      // commentBody to be set in state while typing in the comment form
+      if (!userRef || !userInfo) setLoading(true);
+
+      // NB: commentBody set in state by CommentForm component
 
       const newComment = {
-        uid: authUser.uid,
         userRef,
         comicRef,
         displayName: userInfo.displayName,
         avatarUrl: userInfo.avatarUrl,
+        commentPostedDate: "Posting in progress...",
         likes: 0,
         commentBody,
       };
 
-      // We also want to do some sort of posting state, the new comment should be optimistically rendered but greyed out or something until it's confirmed to have gone through successfully and we should lock the posting function until that's completed so they don't double submit.
+      console.log("new comment:", newComment);
 
-      // to optimistically render the new comment we can immediately add it to comments array
-      // and because this is just to display feedback for the user, we can use their local time instead of the server time
-      // also adding the isOptimistic flag so we can distinguish it from comments fetched from the database
+      // Could alternatively use commentPostedDate: Date.now(),
+
       setComments([
         {
           ...newComment,
-          commentPostedDate: Date.now(),
           isOptimistic: true,
         },
         ...comments,
       ]);
 
-      await postCommentToComic({ authUser, comicId, ...newComment });
+      const postedComment = await postCommentToComic({ ...newComment });
+      setComments((prevComments) => {
+        return prevComments.map((comment) =>
+          comment.isOptimistic && comment.commentBody === newComment.commentBody
+            ? { ...postedComment, isOptimistic: false }
+            : comment
+        );
+      });
+
+      // { ...comment, commentPostedDate: postedComment.commentPostedDate }
 
       setIsPosting(false);
     } catch (error) {
@@ -124,7 +145,7 @@ export default function ComicPage({ params }) {
     }
   }
 
-  // Function to handle comment form
+  console.log(comments);
 
   if (loading) return <CircularProgress />;
   if (error) return <Typography>Error loading comic.</Typography>;
@@ -132,21 +153,55 @@ export default function ComicPage({ params }) {
 
   return (
     <>
-      <Typography
-        variant="h1"
+      <Box
         sx={{
           display: "flex",
-          justifyContent: "center",
-          fontSize: "2rem",
+          alignItems: "center",
+          width: "100%",
           mb: 2,
+          position: "relative",
         }}
       >
-        {comicInfo?.comicTheme}
-      </Typography>
+        <Typography
+          variant="h1"
+          sx={{
+            flexGrow: 1,
+            textAlign: "center",
+            fontSize: "2rem",
+          }}
+        >
+          {comicInfo?.comicTheme}
+        </Typography>
+
+        {comicInfo.isSolo && (
+          <Box
+            variant="body1"
+            sx={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 1,
+              position: "absolute",
+              right: 0,
+            }}
+          >
+            <Typography>Private</Typography>
+            <Switch
+              onClick={() => {
+                handlePrivacySetting();
+              }}
+            />
+            <Typography>Public</Typography>
+          </Box>
+        )}
+      </Box>
       <ComicGrid panels={comicInfo?.panels} />
       <hr />
-      <CommentForm />
-      <CommentsList />
+      <Typography variant="h6" sx={{ mt: 2 }}>
+        Comments:
+      </Typography>
+      <CommentForm handlePostComment={handlePostComment} />
+      <CommentsList comments={comments} />
     </>
   );
 }
