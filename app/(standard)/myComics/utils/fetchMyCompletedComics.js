@@ -8,11 +8,13 @@ import {
   orderBy,
 } from "firebase/firestore";
 
-export default async function fetchCompletedComics() {
+export default async function fetchMyCompletedComics(authUser) {
+  const userRef = doc(db, "users", authUser.uid);
+
   const comicDataQuery = query(
     collection(db, "comics"),
     where("isCompleted", "==", true),
-    where("isPublic", "==", true),
+    where("createdBy", "==", userRef),
     orderBy("createdAt", "asc")
   );
 

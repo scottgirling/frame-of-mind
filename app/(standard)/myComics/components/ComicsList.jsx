@@ -1,8 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
-import fetchCompletedComics from "../utils/fetchCompletedComics";
-import fetchComicPanel from "../utils/fetchComicPanel";
+import fetchMyCompletedComics from "../utils/fetchMyCompletedComics";
+import fetchFirstPanelImage from "../utils/fetchFirstPanelImage";
 import { FilterBar } from "./FilterBar";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "@/lib/firebase";
 
 import {
   Button,
@@ -14,6 +16,7 @@ import {
 } from "@mui/material";
 
 export default function Community() {
+  const [authUser] = useAuthState(auth);
   const [comics, setComics] = useState([]);
 
   const [sortedComics, setSortedComics] = useState([]);
@@ -29,11 +32,13 @@ export default function Community() {
   };
 
   useEffect(() => {
+    if (!authUser) return;
+
     async function fetchData() {
-      const data = await fetchCompletedComics();
+      const data = await fetchMyCompletedComics(authUser);
 
       for (const comic of data) {
-        const firstPanelImage = await fetchComicPanel(comic.panels[0]);
+        const firstPanelImage = await fetchFirstPanelImage(comic.panels[0]);
         comic.firstPanelImage = firstPanelImage;
       }
 
@@ -41,7 +46,7 @@ export default function Community() {
     }
 
     fetchData();
-  }, []);
+  }, [authUser]);
 
   useEffect(() => {
     if (comics.length > 0) {
@@ -85,22 +90,11 @@ export default function Community() {
 
   return (
     <>
-      {/* <ButtonGroup sx={{ mb: 2, gap: 0.5, justifyContent: "center" }}>
-        <Button href={"/"} size="large" variant="contained">
-          Home
-        </Button>
-
-        <Button href={"/create"} size="large" variant="contained">
-          Create
-        </Button>
-      </ButtonGroup> */}
-      <Typography variant="h3" sx={{ textAlign: "center" }}>
-        Community
-      </Typography>
-      <Typography variant="body1" sx={{ textAlign: "center" }}>
-        See what other users have created!
-      </Typography>
-      <FilterBar onFilterChange={handleFilterChange} filters={filters} />
+      <FilterBar
+        onFilterChange={handleFilterChange}
+        setFilters={setFilters}
+        filters={filters}
+      />
 
       <Grid container spacing={3} sx={{ justifyContent: "center" }}>
         {filteredComics.map((comic) => (
