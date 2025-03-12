@@ -7,7 +7,12 @@ import {
   getDoc,
 } from "firebase/firestore";
 
-export default async function deletePanel(uid, comicId, panelId) {
+export default async function deletePanel(
+  uid,
+  comicId,
+  panelId,
+  deleteEmpty = true
+) {
   try {
     // Delete panel from panels collection
     const panelRef = doc(db, "panels", panelId);
@@ -19,7 +24,7 @@ export default async function deletePanel(uid, comicId, panelId) {
     const comicSnapshot = await getDoc(comicRef);
     const panelsCount = comicSnapshot.data().panels.length;
 
-    if (panelsCount === 1) {
+    if (panelsCount === 1 && deleteEmpty) {
       await deleteDoc(comicRef);
     } else {
       await updateDoc(comicRef, {
