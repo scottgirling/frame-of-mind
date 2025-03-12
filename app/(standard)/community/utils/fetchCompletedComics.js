@@ -21,7 +21,6 @@ export default async function fetchCompletedComics() {
     id: doc.id,
     ...doc.data(),
   }));
-  console.log(comics, "<========HERE");
 
   return comics;
 }
