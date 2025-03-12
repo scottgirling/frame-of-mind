@@ -19,6 +19,7 @@ export default function Community() {
 
       setComics(data);
     }
+
     fetchData();
   }, []);
 
