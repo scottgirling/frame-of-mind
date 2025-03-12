@@ -4,22 +4,12 @@ import fetchCompletedComics from "../utils/fetchCompletedComics";
 import fetchComicPanel from "../utils/fetchComicPanel";
 import { FilterBar } from "./FilterBar";
 
-import {
-  Button,
-  ButtonGroup,
-  Typography,
-  Grid2,
-  Card,
-  Box,
-} from "@mui/material";
-
+import { Button, ButtonGroup, Typography, Grid2, Box } from "@mui/material";
 
 export default function Community() {
   const [comics, setComics] = useState([]);
 
-  console.log(comics, "<======COMICS");
- // const [typeFilteredComics, setTypeFilteredComics] = useState([]);
-  const [sortedComics, setSortedComics] = useState([]); 
+  const [sortedComics, setSortedComics] = useState([]);
   const [filteredComics, setFilteredComics] = useState([]);
   const [filters, setFilters] = useState({
     sortBy: "completedAt",
@@ -48,7 +38,7 @@ export default function Community() {
 
   useEffect(() => {
     if (comics.length > 0) {
-      const sortedAndFilteredComics = [...comics].sort((comicA, comicB) => {
+      const sortedComics = [...comics].sort((comicA, comicB) => {
         switch (filters.sortBy) {
           case "likes":
             return (comicB.comicLikes || 0) - (comicA.comicLikes || 0);
@@ -65,27 +55,26 @@ export default function Community() {
         }
       });
 
-      setFilteredComics(sortedAndFilteredComics);
+      setSortedComics(sortedComics);
     }
-  }, [comics, filters]);
+  }, [comics, filters.sortBy]);
 
   useEffect(() => {
     if (sortedComics.length > 0) {
       const filtered = sortedComics.filter((comic) => {
         switch (filters.comicType) {
           case "solo":
-            return comic.isSolo === true;  //show solo comics
+            return comic.isSolo === true; //show solo comics
           case "team":
             return comic.isSolo === false; //show team comics
           case "all":
           default:
-            return true;  //show all comics
+            return true; //show all comics
         }
       });
       setFilteredComics(filtered);
     }
   }, [sortedComics, filters.comicType]);
- 
 
   return (
     <>
@@ -98,7 +87,7 @@ export default function Community() {
           Create
         </Button>
       </ButtonGroup>
-      <FilterBar onFilterChange={handleFilterChange} filters={filters}/>
+      <FilterBar onFilterChange={handleFilterChange} filters={filters} />
       <Typography variant="h3" sx={{ textAlign: "center" }}>
         Community
       </Typography>
