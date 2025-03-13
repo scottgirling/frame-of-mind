@@ -7,7 +7,7 @@ export default function ComicGrid({ panels }) {
       container
       spacing={5}
       columns={4}
-      sx={{ justifyContent: "center", mx: { xl: -20 } }}
+      sx={{ justifyContent: "center", mx: { xl: -15 } }}
     >
       {panels?.map((panel, i) => (
         <Grid key={i} size={{ md: 2, lg: 1, sx: 4 }} sx={{ maxWidth: "400px" }}>
