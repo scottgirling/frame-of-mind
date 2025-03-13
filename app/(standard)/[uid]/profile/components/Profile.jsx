@@ -16,6 +16,8 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import getUserInfo from "../utils/getUserInfo";
 import Avatar from "@/app/components/Avatar";
+import StreakFire from "@/app/components/streak/StreakFire";
+import getData from "@/app/firestore/getData";
 
 export default function Profile() {
   const router = useRouter();
@@ -23,6 +25,24 @@ export default function Profile() {
   const [userInfo, setUserInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [dayStreak, setDayStreak] = useState(0);
+  const [weekStreak, setWeekStreak] = useState(0);
+
+  useEffect(() => {
+    if (!uid) return;
+
+    async function getStreaks() {
+      try {
+        const userInfo = (await getData("users", uid)).result.data();
+        setDayStreak(userInfo.dayStreak || 0);
+        setWeekStreak(userInfo.weekStreak || 0);
+      } catch (error) {
+        console.error("Failed to fetch streaks:", error);
+      }
+    }
+
+    getStreaks();
+  }, [uid]);
 
   useEffect(() => {
     if (!uid) return;
@@ -89,10 +109,10 @@ export default function Profile() {
       </Box>
 
       <Grid container spacing={2}>
-        <Grid size={{ md: 6 }}>
-          <Streaks uid={uid} />
+        <Grid>
+          <StreakFire dayStreak={dayStreak} weekStreak={weekStreak} />
         </Grid>
-        <Grid size={{ md: 6 }}>
+        <Grid size={10}>
           <PaperBox
             colour="primary"
             variant="light"
