@@ -168,9 +168,10 @@ export default function Create() {
       const today = new Date(now);
       const yesterday = new Date();
       yesterday.setDate(today.getDate() - 1);
-      const lastContributedMillis = userData.hasOwnProperty("lastContributedAt")
-        ? userData.lastContributedAt.toMillis()
-        : 0;
+      const lastContributedMillis =
+        userData && userData.hasOwnProperty("lastContributedAt")
+          ? userData.lastContributedAt.toMillis()
+          : 0;
       const lastContributed = new Date(lastContributedMillis);
 
       const contributedToday =
