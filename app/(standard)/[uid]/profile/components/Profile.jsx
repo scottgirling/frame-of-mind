@@ -11,13 +11,14 @@ import Streaks from "@/app/components/streak/Streaks";
 import PaperButton from "@/app/components/PaperButton";
 import { PaintBrush } from "@phosphor-icons/react/dist/ssr";
 import PaperBox from "@/app/components/PaperBox";
-import { Palette } from "@phosphor-icons/react";
-import { useParams } from "next/navigation";
+import { Bell, Palette } from "@phosphor-icons/react";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import getUserInfo from "../utils/getUserInfo";
 import Avatar from "@/app/components/Avatar";
 
 export default function Profile() {
+  const router = useRouter();
   const { uid } = useParams();
   const [userInfo, setUserInfo] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -42,18 +43,37 @@ export default function Profile() {
     fetchUser();
   }, [uid]);
 
-  // console.log(userInfo);
-
   if (loading) return <CircularProgress />;
   if (error) return <Typography>{error}</Typography>;
   if (!uid) return <Typography>No user data found.</Typography>;
 
   return (
     <Box sx={{ position: "relative" }}>
-      {/* Button currently doesnt do anything */}
+      <Button
+        variant="contained"
+        onClick={() => {
+          // Change route to notifications!
+          router.push("/");
+        }}
+        sx={{
+          fontSize: "2rem",
+          boxShadow: "0 2px 4px rgba(0, 0, 0, 0.4)",
+          position: "absolute",
+          left: 0,
+          top: 0,
+        }}
+      >
+        <Bell />
+      </Button>
+      {/* Edit button currently doesnt do anything */}
       <Button
         variant="outlined"
-        sx={{ position: "absolute", right: 0, top: 0 }}
+        sx={{
+          position: "absolute",
+          right: 0,
+          top: 0,
+          boxShadow: "0 2px 4px rgba(0, 0, 0, 0.4)",
+        }}
       >
         Edit profile
       </Button>
@@ -63,7 +83,12 @@ export default function Profile() {
         <Avatar
           avatarUrl={userInfo.avatarUrl}
           displayName={userInfo.displayName}
-          sx={{ width: 200, height: 200, mb: 2 }}
+          sx={{
+            boxShadow: "0 2px 4px rgba(0, 0, 0, 0.4)",
+            width: 200,
+            height: 200,
+            mb: 2,
+          }}
         />
         <Typography
           variant="h1"
