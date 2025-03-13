@@ -5,7 +5,7 @@ import { auth } from "@/lib/firebase";
 import { useEffect, useState } from "react";
 import getData from "../firestore/getData";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { Box, Menu, MenuItem } from "@mui/material";
+import { Box, Link, Menu, MenuItem } from "@mui/material";
 
 export default function UserMenu({ sx }) {
   const [authUser] = useAuthState(auth);
@@ -51,6 +51,15 @@ export default function UserMenu({ sx }) {
         open={open}
         onClose={handleClose}
       >
+        <Link
+          underline="none"
+          href={authUser ? "/" + authUser.uid + "/profile" : undefined}
+        >
+          <MenuItem>Profile</MenuItem>
+        </Link>
+        <Link underline="none" href={"/myComics"}>
+          <MenuItem>My Comics</MenuItem>
+        </Link>
         <MenuItem
           onClick={() => {
             handleClose();

@@ -5,16 +5,16 @@ import StreakFire from "./StreakFire";
 import DayStreak from "./DayStreak";
 import getData from "@/app/firestore/getData";
 
-export default function Streaks({ user, rotation }) {
+export default function Streaks({ uid, rotation }) {
   const [dayStreak, setDayStreak] = useState(0);
   const [weekStreak, setWeekStreak] = useState(0);
 
   useEffect(() => {
-    if (!user.uid) return;
+    if (!uid) return;
 
     async function getStreaks() {
       try {
-        const userInfo = (await getData("users", user.uid)).result.data();
+        const userInfo = (await getData("users", uid)).result.data();
         setDayStreak(userInfo.dayStreak || 0);
         setWeekStreak(userInfo.weekStreak || 0);
       } catch (error) {
@@ -23,7 +23,7 @@ export default function Streaks({ user, rotation }) {
     }
 
     getStreaks();
-  }, [user.uid]);
+  }, [uid]);
 
   return (
     <Box
