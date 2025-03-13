@@ -165,21 +165,27 @@ export default function Create() {
         });
       }
       const now = Timestamp.now().toMillis();
-      const yesterdayDate = now - 24 * 60 * 60 * 1000;
-      const today = new Date(now).getDate();
-      const yesterday = new Date(yesterdayDate).getDate();
-      const contributedDay = new Date(
-        userData.lastContributedAt.toMillis()
-      ).getDate();
+      const today = new Date(now);
+      const yesterday = new Date();
+      yesterday.setDate(today.getDate() - 1);
+      const lastContributedMillis = userData.hasOwnProperty("lastContributedAt")
+        ? userData.lastContributedAt.toMillis()
+        : 0;
+      const lastContributed = new Date(lastContributedMillis);
 
-      console.log(today, contributedDay);
-      const lastContributedMillis = userData.lastContributedAt.toMillis();
-      const currentDayStreak = userData.dayStreak;
-      if (contributedDay !== today) {
-        if (
-          now - lastContributedMillis < 48 * 60 * 60 * 1000 &&
-          today === yesterday + 1
-        ) {
+      const contributedToday =
+        lastContributed.getDate() === today.getDate() &&
+        lastContributed.getMonth() === today.getMonth() &&
+        lastContributed.getFullYear() === today.getFullYear();
+
+      const contributedYesterday =
+        lastContributed.getDate() === yesterday.getDate() &&
+        lastContributed.getMonth() === yesterday.getMonth() &&
+        lastContributed.getFullYear() === yesterday.getFullYear();
+
+      const currentDayStreak = userData.dayStreak ?? 0;
+      if (!contributedToday) {
+        if (contributedYesterday) {
           // Add 1 to dailyStreak if the next day
           await updateDoc(userRef, {
             dayStreak: increment(1),
