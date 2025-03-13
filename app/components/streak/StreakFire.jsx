@@ -4,7 +4,6 @@ import { FireSimple } from "@phosphor-icons/react/dist/ssr";
 
 export default function StreakFire({ weekStreak, rotation }) {
   const theme = useTheme();
-  console.log(theme);
   return (
     <Box
       sx={{
