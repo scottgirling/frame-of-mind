@@ -9,7 +9,7 @@ import { Palette } from "@phosphor-icons/react";
 
 export default function HomePage({ user }) {
   const gameDescription =
-    "Frame of Mind is a creative storytelling app that helps you express your emotions through art. Draw solo or collaborate with others to improve your mental well-being a litle each day.\n\n" +
+    "Frame of Mind is a creative storytelling app that helps you express your emotions through art. Draw solo or collaborate with others to improve your mental well-being a little each day.\n\n" +
     "Features include:\n" +
     "- Virtual Art Studio: Earn points and collect items to inspire your creativity.\n" +
     "- Community Hub: Share comics, and connect with others.\n\n" +
