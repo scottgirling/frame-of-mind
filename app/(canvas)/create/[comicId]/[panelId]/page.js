@@ -1,10 +1,12 @@
 "use client";
-import { useState, useEffect } from "react";
+/** @jsxImportSource @emotion/react */
+import { useState, useEffect, useRef } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import Canvas from "@/app/(canvas)/components/canvas";
 import TopBar from "@/app/components/TopBar";
 import Avatar from "@/app/components/Avatar";
 import {
+  Avatar as RoundIconButton,
   Box,
   Button,
   Dialog,
@@ -15,6 +17,7 @@ import {
   Tooltip,
   TextField,
   CircularProgress,
+  css,
 } from "@mui/material";
 import { auth, db } from "@/lib/firebase";
 import {
@@ -27,10 +30,10 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import deletePanel from "@/app/(standard)/(home)/create/utils/deletePanel";
-import { inspireMeGenerator } from "@/app/(standard)/(home)/create/utils/inspireMeGenerator";
 import getData from "@/app/firestore/getData";
 import { useParams, useRouter } from "next/navigation";
 import { FloppyDiskBack, Trash } from "@phosphor-icons/react/dist/ssr";
+import PaperBox from "@/app/components/PaperBox";
 
 export default function Create() {
   const { comicId, panelId } = useParams();
@@ -51,6 +54,7 @@ export default function Create() {
   const [validComic, setValidComic] = useState(null);
   const [validPanel, setValidPanel] = useState(null);
 
+  const refCanvas = useRef(null);
   const [rawDrawingData, setRawDrawingData] = useState([]);
   const [drawingDataUrl, setDrawingDataUrl] = useState(null);
   const [panelCaption, setPanelCaption] = useState("");
@@ -58,7 +62,6 @@ export default function Create() {
   const [isPanelCaptionSubmitted, setIsPanelCaptionSubmitted] = useState(false);
   const [charCount, setCharCount] = useState(0);
   const charLimit = 140;
-  const [inspireMe, setInspireMe] = useState("");
 
   const [openCheckDialog, setOpenCheckDialog] = useState(false);
   const [dialogAction, setDialogAction] = useState("");
@@ -131,15 +134,17 @@ export default function Create() {
     }
   }
 
-  async function handleSubmit() {
+  async function handleSubmit(canvas) {
     try {
       if (!comicId || !panelId) return;
 
       const rawDrawingDataString = JSON.stringify(rawDrawingData);
 
+      const dataUrl = canvas.toDataURL();
+
       await updateDoc(panelRef, {
         rawDrawingDataString,
-        drawingDataUrl,
+        drawingDataUrl: dataUrl,
         isInProgress: false,
         panelCaption,
       });
@@ -148,6 +153,7 @@ export default function Create() {
         isInProgress: false,
       });
 
+      const userData = (await getData("users", authUser.uid)).result.data();
       const comicSnapshot = await getDoc(comicRef);
       if (comicSnapshot.data().panels.length === 8) {
         await updateDoc(comicRef, {
@@ -157,17 +163,19 @@ export default function Create() {
         await updateDoc(userRef, {
           myComics: arrayUnion(comicRef),
         });
+      }
+      const now = Timestamp.now().toMillis();
+      const yesterdayDate = now - 24 * 60 * 60 * 1000;
+      const today = new Date(now).getDate();
+      const yesterday = new Date(yesterdayDate).getDate();
+      const contributedDay = new Date(
+        userData.lastContributedAt.toMillis()
+      ).getDate();
 
-        await updateDoc(userRef, {
-          lastContributedAt: serverTimestamp(),
-        });
-
-        const now = Timestamp.now().toMillis();
-        const yesterdayDate = now - 24 * 60 * 60 * 1000;
-        const today = new Date(now).getDate();
-        const yesterday = new Date(yesterdayDate).getDate();
-        const lastContributedMillis = userInfo.lastContributedAt.toMillis();
-        const currentDayStreak = userInfo.dayStreak;
+      console.log(today, contributedDay);
+      const lastContributedMillis = userData.lastContributedAt.toMillis();
+      const currentDayStreak = userData.dayStreak;
+      if (contributedDay !== today) {
         if (
           now - lastContributedMillis < 48 * 60 * 60 * 1000 &&
           today === yesterday + 1
@@ -183,7 +191,6 @@ export default function Create() {
             weekStreak: 0,
           });
         }
-
         if (currentDayStreak === 6) {
           await updateDoc(userRef, {
             weekStreak: increment(1),
@@ -191,6 +198,9 @@ export default function Create() {
         }
       }
 
+      await updateDoc(userRef, {
+        lastContributedAt: serverTimestamp(),
+      });
       setDialogAction("submit");
       setOpenConfirmationDialog(true);
 
@@ -224,26 +234,12 @@ export default function Create() {
                 Comic theme: {comicTheme}
               </Typography>
               <Button
-                sx={{ ml: "auto", mr: 0.5 }}
-                variant="outlined"
-                onClick={() => {
-                  setDialogAction("discard");
-                  setOpenCheckDialog(true);
+                sx={{
+                  ml: "auto",
+                  mr: 2,
+                  bgcolor: "green.main",
+                  color: "green.contrastText",
                 }}
-              >
-                <Trash />
-              </Button>
-              <Button
-                sx={{ ml: 0.5, mr: 0.5 }}
-                variant="outlined"
-                onClick={() => {
-                  handleSave();
-                }}
-              >
-                <FloppyDiskBack />
-              </Button>
-              <Button
-                sx={{ ml: 0.5, mr: 2 }}
                 variant="contained"
                 onClick={() => {
                   setDialogAction("submit");
@@ -256,226 +252,264 @@ export default function Create() {
             </>
           }
         />
-        <Box
+
+        <PaperBox
+          colour="light"
+          variant="main"
+          borderSize={15}
+          margin={{ m: "auto" }}
           sx={{
-            mt: "1.25rem",
-            display: "flex",
-            flexDirection: "row",
-            justifyContent: "center",
-            alignItems: "center",
-            gap: 2,
-          }}
-        >
-          <Typography variant="body1">
-            You are drawing panel {comicInfo.panels.length}
-          </Typography>
-          {comicInfo.panels.length > 1 && (
-            <Button
-              variant="contained"
-              onClick={() => setShowPreviousPanels(true)}
-            >
-              Show previous panels?
-            </Button>
-          )}
-          {showPreviousPanels && (
-            <Box>
-              {/* To do: Set up a PreviousPanels component which shows the images of each panel which can be enlarged onClick/hover? */}
-              {/* <PreviousPanels comicInfo={comicInfo} /> */}
-            </Box>
-          )}
-        </Box>
-
-        <Tooltip
-          title="Need some inspiration or not sure where to start? An idea is only a click away!"
-          arrow
-          placement="right"
-        >
-          <Button
-            variant="contained"
-            sx={{ m: "auto", mt: 2 }}
-            onClick={() => {
-              setInspireMe(inspireMeGenerator());
-            }}
-          >
-            Inspire Me
-          </Button>
-        </Tooltip>
-
-        {inspireMe && (
-          <Typography sx={{ m: "auto", mt: 2 }}>Try... {inspireMe}</Typography>
-        )}
-
-        <Box
-          component={"main"}
-          sx={{
-            mt: "1.25rem",
             display: "flex",
             flexDirection: "column",
-            flexGrow: 1,
-            maxHeight: "100%",
+            justifyContent: "center",
+            p: 5,
           }}
         >
-          <Canvas
-            setRawDrawingData={setRawDrawingData}
-            setDrawingDataUrl={setDrawingDataUrl}
-            setPanelCaption={setPanelCaption}
-            panelInfo={panelInfo}
-            parsedDrawingData={
-              panelInfo.rawDrawingDataString &&
-              panelInfo.rawDrawingDataString.length > 0
-                ? JSON.parse(panelInfo.rawDrawingDataString)
-                : []
-            }
-          />
-          <Box component="form" sx={{ m: "auto", mb: 5 }}>
-            {isPanelCaptionSubmitted ? (
-              <>
-                <Typography
-                  sx={{ textAlign: "center", m: "auto", ml: 5, mr: 5 }}
-                >
-                  Panel Caption: {panelCaption}
-                </Typography>
-                <Box sx={{ display: "flex" }}>
-                  <Button
-                    variant="outlined"
-                    sx={{ width: 160, m: "auto", mt: 2, mr: 1 }}
-                    onClick={() => {
-                      setIsPanelCaptionSubmitted(false);
-                    }}
-                  >
-                    Edit Caption
-                  </Button>
-                  <Button
-                    variant="contained"
-                    sx={{ width: 160, m: "auto", mt: 2, ml: 1 }}
-                    onClick={() => {
-                      setIsPanelCaptionSubmitted(false);
-                      setPanelCaption("");
-                      setTempPanelCaption("");
-                      setCharCount(0);
-                    }}
-                  >
-                    Remove Caption
-                  </Button>
-                </Box>
-              </>
-            ) : (
-              <>
-                <TextField
-                  id="outlined-multiline-flexible"
-                  label="Panel Caption"
-                  slotProps={{ htmlInput: { maxLength: 140 } }}
-                  multiline
-                  variant="outlined"
-                  helperText={`Add a description of what's happening in your panel. ${
-                    charLimit - charCount
-                  } characters remaining.`}
-                  value={tempPanelCaption}
-                  onChange={(event) => {
-                    setTempPanelCaption(event.target.value);
-                    setCharCount(event.target.value.length);
-                  }}
-                />
-                <Button
-                  variant="contained"
-                  sx={{ m: 1.25 }}
-                  onClick={() => {
-                    setIsPanelCaptionSubmitted(true);
-                    setPanelCaption(tempPanelCaption);
-                  }}
-                >
-                  Save Caption
-                </Button>
-              </>
-            )}
-          </Box>
-        </Box>
-
-        <Box>
-          <Dialog open={openCheckDialog} onClose={handleDialogClose}>
-            <DialogTitle>
-              {dialogAction === "discard" && "Discard Panel"}
-              {dialogAction === "submit" && "Submit Panel"}
-            </DialogTitle>
-            <DialogContent>
-              {dialogAction === "discard" && (
-                <Typography variant="body1">
-                  Are you sure you want to discard this panel? This action
-                  cannot be undone.
-                </Typography>
-              )}
-              {dialogAction === "submit" && (
-                <Typography variant="body1">
-                  Are you ready to submit your panel? Once submitted, you won't
-                  be able to make further changes.
-                </Typography>
-              )}
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={handleDialogClose}>Cancel</Button>
-              {dialogAction === "discard" && (
-                <Button
-                  onClick={() => {
-                    setOpenCheckDialog(false);
-                    handleDiscard();
-                  }}
-                >
-                  Discard
-                </Button>
-              )}
-              {dialogAction === "submit" && (
-                <Button
-                  onClick={() => {
-                    setOpenCheckDialog(false);
-                    handleSubmit();
-                  }}
-                >
-                  Submit
-                </Button>
-              )}
-            </DialogActions>
-          </Dialog>
-        </Box>
-        <Box>
-          <Dialog
-            disableEscapeKeyDown
-            open={openConfirmationDialog}
-            onClose={(event, reason) => {
-              if (reason !== "backdropClick") {
-                handleDialogClose();
-              } else return;
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "center",
+              alignItems: "center",
+              gap: 2,
             }}
           >
-            <DialogTitle>Success!</DialogTitle>
-            <DialogContent>
-              {dialogAction === "discard" && (
-                <Typography variant="body1">
-                  Panel successfully deleted. Click below to return to home.
-                </Typography>
-              )}
-              {dialogAction === "save" && (
-                <Typography variant="body1">
-                  Panel successfully saved. Click below to return to home.
-                </Typography>
-              )}
-              {dialogAction === "submit" && (
-                <Typography variant="body1">
-                  Panel successfully submitted. Click below to return to home.
-                </Typography>
-              )}
-            </DialogContent>
-            <DialogActions>
+            <Typography variant="body1">
+              You are drawing panel {comicInfo.panels.length}
+            </Typography>
+            {comicInfo.panels.length > 1 && (
               <Button
-                onClick={() => {
-                  handleDialogClose();
-                  router.push("/");
-                }}
+                variant="contained"
+                onClick={() => setShowPreviousPanels(true)}
               >
-                Return home
+                Show previous panels?
               </Button>
-            </DialogActions>
-          </Dialog>
-        </Box>
+            )}
+            {showPreviousPanels && (
+              <Box>
+                {/* To do: Set up a PreviousPanels component which shows the images of each panel which can be enlarged onClick/hover? */}
+                {/* <PreviousPanels comicInfo={comicInfo} /> */}
+              </Box>
+            )}
+          </Box>
+
+          <Box
+            component={"main"}
+            sx={{
+              mt: "1.25rem",
+              display: "flex",
+              flexDirection: "column",
+              flexGrow: 1,
+              maxHeight: "100%",
+            }}
+          >
+            <Canvas
+              setRawDrawingData={setRawDrawingData}
+              refCanvas={refCanvas}
+              fileButtons={
+                <>
+                  <RoundIconButton
+                    sx={{
+                      mx: 0.5,
+                      bgcolor: "primary.light",
+                      color: "primary.main",
+                    }}
+                    css={css`
+                      :hover {
+                        opacity: 0.8;
+                        cursor: pointer;
+                      }
+                    `}
+                    variant="outlined"
+                    onClick={() => {
+                      setDialogAction("discard");
+                      setOpenCheckDialog(true);
+                    }}
+                  >
+                    <Trash />
+                  </RoundIconButton>
+                  <RoundIconButton
+                    sx={{
+                      mx: 0.5,
+                      bgcolor: "primary.light",
+                      color: "primary.main",
+                    }}
+                    css={css`
+                      :hover {
+                        opacity: 0.8;
+                        cursor: pointer;
+                      }
+                    `}
+                    variant="outlined"
+                    onClick={() => {
+                      handleSave();
+                    }}
+                  >
+                    <FloppyDiskBack />
+                  </RoundIconButton>
+                </>
+              }
+              setPanelCaption={setPanelCaption}
+              parsedDrawingData={
+                panelInfo.rawDrawingDataString &&
+                panelInfo.rawDrawingDataString.length > 0
+                  ? JSON.parse(panelInfo.rawDrawingDataString)
+                  : []
+              }
+            />
+            <Box component="form" sx={{ m: "auto" }}>
+              {isPanelCaptionSubmitted ? (
+                <>
+                  <Typography
+                    sx={{ textAlign: "center", m: "auto", ml: 5, mr: 5 }}
+                  >
+                    Panel Caption: {panelCaption}
+                  </Typography>
+                  <Box sx={{ display: "flex" }}>
+                    <Button
+                      variant="outlined"
+                      sx={{ width: 160, m: "auto", mt: 2, mr: 1 }}
+                      onClick={() => {
+                        setIsPanelCaptionSubmitted(false);
+                      }}
+                    >
+                      Edit Caption
+                    </Button>
+                    <Button
+                      variant="contained"
+                      sx={{ width: 160, m: "auto", mt: 2, ml: 1 }}
+                      onClick={() => {
+                        setIsPanelCaptionSubmitted(false);
+                        setPanelCaption("");
+                        setTempPanelCaption("");
+                        setCharCount(0);
+                      }}
+                    >
+                      Remove Caption
+                    </Button>
+                  </Box>
+                </>
+              ) : (
+                <>
+                  <TextField
+                    id="outlined-multiline-flexible"
+                    label="Panel Caption"
+                    slotProps={{ htmlInput: { maxLength: 140 } }}
+                    multiline
+                    variant="outlined"
+                    helperText={`Add a description of what's happening in your panel. ${
+                      charLimit - charCount
+                    } characters remaining.`}
+                    value={tempPanelCaption}
+                    onChange={(event) => {
+                      setTempPanelCaption(event.target.value);
+                      setCharCount(event.target.value.length);
+                    }}
+                  />
+                  <Button
+                    variant="contained"
+                    sx={{ m: 1.25 }}
+                    onClick={() => {
+                      setIsPanelCaptionSubmitted(true);
+                      setPanelCaption(tempPanelCaption);
+                    }}
+                  >
+                    Save Caption
+                  </Button>
+                </>
+              )}
+            </Box>
+          </Box>
+          <Box>
+            <Dialog open={openCheckDialog} onClose={handleDialogClose}>
+              <DialogTitle>
+                {dialogAction === "discard" && "Discard Panel"}
+                {dialogAction === "submit" && "Submit Panel"}
+              </DialogTitle>
+              <DialogContent>
+                {dialogAction === "discard" && (
+                  <Typography variant="body1">
+                    {comicInfo.panels.length === 1
+                      ? "Warning! This is the first panel of the comic, discarding this panel will delete the whole comic."
+                      : null}
+                    <br />
+                    Are you sure you want to discard this panel? This action
+                    cannot be undone .
+                  </Typography>
+                )}
+                {dialogAction === "submit" && (
+                  <Typography variant="body1">
+                    Are you ready to submit your panel? Once submitted, you
+                    won't be able to make further changes.
+                  </Typography>
+                )}
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={handleDialogClose}>Cancel</Button>
+                {dialogAction === "discard" && (
+                  <Button
+                    onClick={() => {
+                      setOpenCheckDialog(false);
+                      handleDiscard();
+                    }}
+                  >
+                    Discard
+                  </Button>
+                )}
+                {dialogAction === "submit" && (
+                  <Button
+                    onClick={() => {
+                      setOpenCheckDialog(false);
+                      handleSubmit(refCanvas.current);
+                    }}
+                  >
+                    Submit
+                  </Button>
+                )}
+              </DialogActions>
+            </Dialog>
+          </Box>
+          <Box>
+            <Dialog
+              disableEscapeKeyDown
+              open={openConfirmationDialog}
+              onClose={(event, reason) => {
+                if (reason !== "backdropClick") {
+                  handleDialogClose();
+                } else return;
+              }}
+            >
+              <DialogTitle>Success!</DialogTitle>
+              <DialogContent>
+                {dialogAction === "discard" && (
+                  <Typography variant="body1">
+                    Panel successfully deleted. Click below to return to home.
+                  </Typography>
+                )}
+                {dialogAction === "save" && (
+                  <Typography variant="body1">
+                    Panel successfully saved. Click below to return to home.
+                  </Typography>
+                )}
+                {dialogAction === "submit" && (
+                  <Typography variant="body1">
+                    Panel successfully submitted. Click below to return to home.
+                  </Typography>
+                )}
+              </DialogContent>
+              <DialogActions>
+                <Button
+                  onClick={() => {
+                    handleDialogClose();
+                    router.push("/");
+                  }}
+                >
+                  Return home
+                </Button>
+              </DialogActions>
+            </Dialog>
+          </Box>
+        </PaperBox>
       </>
     );
   }
