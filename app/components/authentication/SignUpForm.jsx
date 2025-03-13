@@ -22,7 +22,7 @@ export default function SignUpForm({ setCurrentForm, setLoading }) {
   return (
     <Box
       component="form"
-      sx={{ p: 5, maxWidth: "700px", mx: "auto" }}
+      sx={{ p: 3, maxWidth: "700px", mx: "auto" }}
       onSubmit={handleForm}
     >
       <Typography variant="h1" sx={{ fontSize: "2.5rem", mb: 1 }}>
@@ -73,15 +73,6 @@ export default function SignUpForm({ setCurrentForm, setLoading }) {
         </Grid>
 
         <Grid size={12} sx={{ display: "flex", gap: 2, justifyContent: "end" }}>
-          <Button
-            type="submit"
-            variant="outlined"
-            onClick={() => {
-              setCurrentForm(null);
-            }}
-          >
-            Cancel
-          </Button>
           <Button type="submit" variant="contained">
             Sign up
           </Button>
