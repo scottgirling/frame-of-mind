@@ -20,6 +20,7 @@ export default function UserMenu({ sx }) {
     setAnchorEl(null);
   };
   useEffect(() => {
+    if(!authUser) return
     if (authUser) {
       async function fetchUserData() {
         const userInfo = (await getData("users", authUser.uid)).result.data();
@@ -35,7 +36,7 @@ export default function UserMenu({ sx }) {
 
   return (
     <Box sx={{ ...sx }}>
-      <Avatar
+      {displayName && <Avatar
         displayName={displayName}
         avatarUrl={avatarUrl}
         onClick={handleClick}
@@ -43,8 +44,7 @@ export default function UserMenu({ sx }) {
         aria-controls={open ? "basic-menu" : undefined}
         aria-haspopup="true"
         aria-expanded={open ? "true" : undefined}
-      />
-
+      />}
       <Menu
         id="basic-menu"
         anchorEl={anchorEl}
