@@ -10,15 +10,20 @@ export default function Streaks({ user, rotation }) {
   const [weekStreak, setWeekStreak] = useState(0);
 
   useEffect(() => {
+    if (!user.uid) return;
+
     async function getStreaks() {
-      const userInfo = (await getData("users", user.uid)).result.data();
-      const dayStreak = userInfo.dayStreak;
-      const weekStreak = userInfo.weekStreak;
-      setDayStreak(dayStreak);
-      setWeekStreak(weekStreak);
+      try {
+        const userInfo = (await getData("users", user.uid)).result.data();
+        setDayStreak(userInfo.dayStreak || 0);
+        setWeekStreak(userInfo.weekStreak || 0);
+      } catch (error) {
+        console.error("Failed to fetch streaks:", error);
+      }
     }
+
     getStreaks();
-  }, [dayStreak, weekStreak]);
+  }, [user.uid]);
 
   return (
     <Box
