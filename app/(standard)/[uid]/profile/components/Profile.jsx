@@ -106,7 +106,7 @@ export default function Profile() {
 
       <Grid container spacing={2}>
         <Grid size={{ md: 6 }}>
-          <Streaks user={userInfo} />
+          <Streaks uid={uid} />
         </Grid>
         <Grid size={{ md: 6 }}>
           <PaperBox

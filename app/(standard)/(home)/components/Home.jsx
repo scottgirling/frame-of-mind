@@ -48,7 +48,7 @@ export default function HomePage({ user }) {
       </Box>
       <Grid container spacing={2}>
         <Grid size={{ md: 5.5 }}>
-          <Streaks user={user} />
+          <Streaks uid={user.uid} />
         </Grid>
         <Grid size={{ md: 6.5 }}>
           <PaperBox
