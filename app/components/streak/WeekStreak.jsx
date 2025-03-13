@@ -7,7 +7,7 @@ export default function WeekStreak({ weekStreak, dayStreak }) {
       colour="primary"
       variant="light"
       rotation={2}
-      sx={{ borderRadius: 3, p: 5 }}
+      sx={{ borderRadius: 3, p: 4 }}
     >
       <Typography>
         {weekStreak > 1 ? <strong>You’re on fire! Keep it up!</strong> : null}
