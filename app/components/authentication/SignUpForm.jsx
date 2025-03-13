@@ -22,7 +22,7 @@ export default function SignUpForm({ setCurrentForm, setLoading }) {
   return (
     <Box
       component="form"
-      sx={{ p: 5, maxWidth: "700px", mx: "auto", bgcolor: "light.light" }}
+      sx={{ p: 5, maxWidth: "700px", mx: "auto" }}
       onSubmit={handleForm}
     >
       <Typography variant="h1" sx={{ fontSize: "2.5rem", mb: 1 }}>

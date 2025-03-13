@@ -15,7 +15,7 @@ export default function LoginForm({ setCurrentForm, setLoading }) {
   return (
     <Box
       component="form"
-      sx={{ p: 5, maxWidth: "700px", mx: "auto", bgcolor: "light.light" }}
+      sx={{ p: 5, maxWidth: "700px", mx: "auto" }}
       onSubmit={(event) => {
         event.preventDefault();
         handleEmailLogin(email, password, setLoading);
