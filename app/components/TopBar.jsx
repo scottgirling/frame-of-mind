@@ -14,7 +14,7 @@ export default function TopBar({ components }) {
 
   const handleNotificationsClick = () => {
     if (authUser) {
-      router.push(`/notifications/${authUser.uid}/`);
+      router.push(`/${authUser.uid}/notifications/`);
     } else {
       router.push("/"); // Redirect to login if not authenticated
     }
