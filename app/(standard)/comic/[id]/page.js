@@ -173,8 +173,8 @@ export default function ComicPage({ params }) {
   async function handleDeleteComic() {
     try {
       await deleteDoc(comicRef);
-      router.push("/");
-      // Notify user of deletion and redirect to my comics?
+      router.push("/myComics");
+      // Notify user of deletion?
     } catch (error) {
       console.log(error);
       setError("Error deleting comic");
@@ -199,12 +199,13 @@ export default function ComicPage({ params }) {
       >
         {isUsersComic && (
           <Button
+            variant="contained"
             onClick={handleOpenDialog}
             sx={{
               position: "absolute",
               left: 0,
               top: 0,
-              fontSize: "1.7rem",
+              fontSize: "1.8rem",
             }}
           >
             <Trash />
