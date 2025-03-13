@@ -683,8 +683,8 @@ const Canvas = ({
             onBlur={handleBlur}
             style={{
               position: "absolute",
-              top: selectedElement.y1 + yOffset - 13,
-              left: selectedElement.x1 + xOffset - 6,
+              top: selectedElement.y1 + yOffset - 108,
+              left: selectedElement.x1 + xOffset - 340,
               font: "24px sans-serif",
               margin: 0,
               padding: 0,
