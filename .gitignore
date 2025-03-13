@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+#service key for service worker (sending notification to user device when they aren't on the frame-of-mind tab/ app is closed. This will enable push notifications)
+# REMOVED
