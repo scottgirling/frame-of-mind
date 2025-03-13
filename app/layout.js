@@ -17,6 +17,7 @@ export default function RootLayout({ children }) {
           <CssBaseline />
           <ThemeProvider theme={theme}>
             <Box
+              className="scroll-bg"
               sx={{
                 bgcolor: "primary.light",
                 color: "primary.dark",

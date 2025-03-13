@@ -79,7 +79,13 @@ export default function Community() {
 
   return (
     <>
-      <PaperBox colour="light" variant="main" sx={{ p: 3, mb: 3 }}>
+      <PaperBox
+        colour="light"
+        variant="main"
+        margin={{ mb: 3, mx: "auto" }}
+        sx={{ p: 3 }}
+        rotation={1}
+      >
         <Typography variant="h3" sx={{ textAlign: "center" }}>
           Community
         </Typography>
@@ -88,9 +94,7 @@ export default function Community() {
         </Typography>
       </PaperBox>
 
-      <PaperBox colour="light" variant="main" sx={{ p: 1 }}>
-        <FilterBar onFilterChange={handleFilterChange} filters={filters} />
-      </PaperBox>
+      <FilterBar onFilterChange={handleFilterChange} filters={filters} />
       <Grid
         container
         spacing={3}

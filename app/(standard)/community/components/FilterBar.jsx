@@ -9,6 +9,7 @@ import {
   ToggleButton,
   ToggleButtonGroup,
 } from "@mui/material";
+import PaperBox from "@/app/components/PaperBox";
 export function FilterBar({ onFilterChange, userId }) {
   const [filters, setFilters] = useState({
     sortBy: "completedAt",
@@ -46,22 +47,31 @@ export function FilterBar({ onFilterChange, userId }) {
   return (
     <AppBar
       position="static"
-      sx={{ bgcolor: "light.main" }}
-      variant="contained"
+      sx={{ bgcolor: "transparent" }}
+      variant="transparent"
     >
-      <Toolbar sx={{ gap: 2, display: "flex", flexWrap: "wrap" }}>
-        <FormControl sx={{ minWidth: 180 }}>
-          <Select
-            value={filters.sortBy}
-            onChange={handleSortChange}
-            displayEmpty
-            variant="standard"
-          >
-            <MenuItem value="completedAt">Most Recent</MenuItem>
-            <MenuItem value="likes">Most Liked</MenuItem>
-            <MenuItem value="theme">Theme (A-Z)</MenuItem>
-          </Select>
-        </FormControl>
+      <Toolbar
+        sx={{
+          gap: 2,
+          display: "flex",
+          flexWrap: "wrap",
+          justifyContent: "center",
+        }}
+      >
+        <PaperBox colour="light" variant="main" rotation={1} sx={{ p: 1 }}>
+          <FormControl sx={{ minWidth: 180 }}>
+            <Select
+              value={filters.sortBy}
+              onChange={handleSortChange}
+              displayEmpty
+              variant="standard"
+            >
+              <MenuItem value="completedAt">Most Recent</MenuItem>
+              <MenuItem value="likes">Most Liked</MenuItem>
+              <MenuItem value="theme">Theme (A-Z)</MenuItem>
+            </Select>
+          </FormControl>
+        </PaperBox>
         {userId && (
           <ToggleButton
             value="myComics"
@@ -72,23 +82,36 @@ export function FilterBar({ onFilterChange, userId }) {
             My Comics
           </ToggleButton>
         )}
-        <ToggleButtonGroup
-          value={filters.comicType}
-          exclusive
-          onChange={handleComicTypeToggle}
-          aria-label="comic type"
-        >
-         
-          <ToggleButton value="solo" aria-label="show solo comics">
-            Solo
-          </ToggleButton>
-          <ToggleButton value="team" aria-label="show team comics">
-            Team
-          </ToggleButton>
-          <ToggleButton value="all" aria-label="show all comics">
-            All
-          </ToggleButton>
-        </ToggleButtonGroup>
+        <PaperBox colour="light" variant="main" rotation={-1}>
+          <ToggleButtonGroup
+            value={filters.comicType}
+            exclusive
+            onChange={handleComicTypeToggle}
+            aria-label="comic type"
+          >
+            <ToggleButton
+              value="solo"
+              sx={{ border: 0 }}
+              aria-label="show solo comics"
+            >
+              Solo
+            </ToggleButton>
+            <ToggleButton
+              value="team"
+              sx={{ border: 0 }}
+              aria-label="show team comics"
+            >
+              Team
+            </ToggleButton>
+            <ToggleButton
+              value="all"
+              sx={{ border: 0 }}
+              aria-label="show all comics"
+            >
+              All
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </PaperBox>
       </Toolbar>
     </AppBar>
   );

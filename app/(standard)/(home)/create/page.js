@@ -1,5 +1,4 @@
 "use client";
-
 import { auth } from "@/lib/firebase";
 import {
   Box,
@@ -23,6 +22,7 @@ import filterYesterdaysComics from "./utils/filterYesterdaysComics";
 import deletePanel from "./utils/deletePanel";
 import PaperBox from "@/app/components/PaperBox";
 import PaperButton from "@/app/components/PaperButton";
+import Head from "next/head";
 
 export default function CreateComicPage() {
   const router = useRouter();
@@ -205,123 +205,139 @@ export default function CreateComicPage() {
   </PaperBox>;
 
   return (
-    <PaperBox
-      colour="light"
-      variant="main"
-      margin={{ m: "auto" }}
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        alignItems: "center",
-        gap: 3,
-        px: 6,
-        py: 4,
-        pb: 2,
-      }}
-    >
-      <Typography variant="h1" fontSize={30}>
-        Choose your gameplay mode below!
-      </Typography>
-      <Typography
-        variant="body1"
+    <>
+      <style global jsx>{`
+        .scroll-bg {
+          animation: scrolling 30s linear infinite;
+        }
+
+        @keyframes scrolling {
+          from {
+            background-position: 0 0;
+          }
+          to {
+            background-position: 400px 400px;
+          }
+        }
+      `}</style>
+      <PaperBox
+        colour="light"
+        variant="main"
+        margin={{ m: "auto" }}
         sx={{
           display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          gap: 1.5,
-          fontSize: 30,
-        }}
-      >
-        Solo
-        <Switch
-          onClick={() => {
-            setIsSolo(!isSolo);
-          }}
-        />
-        Team
-      </Typography>
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
+          flexDirection: "column",
           justifyContent: "center",
-          width: "50%",
-          gap: 1.5,
+          alignItems: "center",
+          gap: 3,
+          px: 6,
+          py: 4,
+          pb: 2,
         }}
       >
-        <PaperButton
-          variant="primary"
-          sx={{ fontSize: 20, textWrap: "nowrap" }}
-          onClick={() => {
-            if (isSolo) {
-              setShowExistingComics(true);
-            } else {
-              // In team mode, use oldest comic
-              if (panelsInProgress.length) {
-                handleContinueExistingClick(panelsInProgress[0].comicRef);
-                return;
-              } else if (existingComics.length === 0) {
-                setError("No existing comics found.");
-                return;
-              }
-              handleContinueExistingClick(existingComics[0]);
-            }
+        <Typography variant="h1" fontSize={30}>
+          Choose your gameplay mode below!
+        </Typography>
+        <Typography
+          variant="body1"
+          sx={{
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 1.5,
+            fontSize: 30,
           }}
         >
-          Continue existing comic
-        </PaperButton>
-        <PaperButton
-          variant="primary"
-          sx={{ fontSize: 20, textWrap: "nowrap" }}
-          onClick={handleNewComicClick}
+          Solo
+          <Switch
+            onClick={() => {
+              setIsSolo(!isSolo);
+            }}
+          />
+          Team
+        </Typography>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "50%",
+            gap: 1.5,
+          }}
         >
-          Start a new comic
-        </PaperButton>
-      </Box>
-      <Box>
-        {fetchingExistingComics && showExistingComics && <CircularProgress />}
-        {error && <p>{error}</p>}
-        {!loading && showExistingComics && isSolo && (
-          <Box sx={{ display: "flex", flexDirection: "column" }}>
-            {existingComics.length === 0 ? (
-              <Typography variant="body1">
-                No existing comics found. Start a new one by clicking the new
-                comic button above!
-              </Typography>
-            ) : (
-              existingComics.map((comic) => {
-                return (
-                  <Button
-                    key={comic.id}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleContinueExistingClick(comic);
-                    }}
-                  >
-                    {comic.comicTheme}
-                  </Button>
-                );
-              })
-            )}
-          </Box>
-        )}
-      </Box>
-      <Dialog open={openDialog} onClose={handleDialogClose}>
-        <DialogTitle>Panel In Progress</DialogTitle>
-        <DialogContent>
-          <Typography variant="body1">
-            You already have a panel in progress. Do you want to continue
-            drawing or discard it?
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleDialogClose}>Cancel</Button>
-          <Button onClick={handleContinueDrawing}>Continue Drawing</Button>
-          <Button onClick={handleDiscardPanel}>Discard Panel</Button>
-        </DialogActions>
-      </Dialog>
-    </PaperBox>
+          <PaperButton
+            variant="primary"
+            sx={{ fontSize: 20, textWrap: "nowrap" }}
+            onClick={() => {
+              if (isSolo) {
+                setShowExistingComics(true);
+              } else {
+                // In team mode, use oldest comic
+                if (panelsInProgress.length) {
+                  handleContinueExistingClick(panelsInProgress[0].comicRef);
+                  return;
+                } else if (existingComics.length === 0) {
+                  setError("No existing comics found.");
+                  return;
+                }
+                handleContinueExistingClick(existingComics[0]);
+              }
+            }}
+          >
+            Continue existing comic
+          </PaperButton>
+          <PaperButton
+            variant="primary"
+            sx={{ fontSize: 20, textWrap: "nowrap" }}
+            onClick={handleNewComicClick}
+          >
+            Start a new comic
+          </PaperButton>
+        </Box>
+        <Box>
+          {fetchingExistingComics && showExistingComics && <CircularProgress />}
+          {error && <p>{error}</p>}
+          {!loading && showExistingComics && isSolo && (
+            <Box sx={{ display: "flex", flexDirection: "column" }}>
+              {existingComics.length === 0 ? (
+                <Typography variant="body1">
+                  No existing comics found. Start a new one by clicking the new
+                  comic button above!
+                </Typography>
+              ) : (
+                existingComics.map((comic) => {
+                  return (
+                    <Button
+                      key={comic.id}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleContinueExistingClick(comic);
+                      }}
+                    >
+                      {comic.comicTheme}
+                    </Button>
+                  );
+                })
+              )}
+            </Box>
+          )}
+        </Box>
+        <Dialog open={openDialog} onClose={handleDialogClose}>
+          <DialogTitle>Panel In Progress</DialogTitle>
+          <DialogContent>
+            <Typography variant="body1">
+              You already have a panel in progress. Do you want to continue
+              drawing or discard it?
+            </Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleDialogClose}>Cancel</Button>
+            <Button onClick={handleContinueDrawing}>Continue Drawing</Button>
+            <Button onClick={handleDiscardPanel}>Discard Panel</Button>
+          </DialogActions>
+        </Dialog>
+      </PaperBox>
+    </>
   );
 }
