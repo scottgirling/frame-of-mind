@@ -49,22 +49,6 @@ export default function Profile() {
 
   return (
     <Box sx={{ position: "relative" }}>
-      <Button
-        variant="contained"
-        onClick={() => {
-          // Change route to notifications!
-          router.push("/");
-        }}
-        sx={{
-          fontSize: "2rem",
-          boxShadow: "0 2px 4px rgba(0, 0, 0, 0.4)",
-          position: "absolute",
-          left: 0,
-          top: 0,
-        }}
-      >
-        <Bell />
-      </Button>
       {/* Edit button currently doesnt do anything */}
       <Button
         variant="outlined"

@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
-import { Notification } from "@phosphor-icons/react";
+import { Bell, Notification } from "@phosphor-icons/react";
 
 export default function TopBar({ components }) {
   const router = useRouter();
@@ -14,7 +14,7 @@ export default function TopBar({ components }) {
 
   const handleNotificationsClick = () => {
     if (authUser) {
-      router.push(`/notifications/${authUser.uid}/`);
+      router.push(`/${authUser.uid}/notifications/`);
     } else {
       router.push("/"); // Redirect to login if not authenticated
     }
@@ -47,7 +47,7 @@ export default function TopBar({ components }) {
 
         {authUser && (
           <Button color="inherit" onClick={handleNotificationsClick}>
-            <Notification size={32} />
+            <Bell variant="contained" size={32} />
           </Button>
         )}
       </Toolbar>

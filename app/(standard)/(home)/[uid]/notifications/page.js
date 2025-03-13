@@ -11,6 +11,7 @@ import {
   Heart,
 } from "@phosphor-icons/react";
 import { ChatCircle, FilePlus } from "@phosphor-icons/react/dist/ssr";
+import PaperBox from "@/app/components/PaperBox";
 
 export default function NotificationsPage() {
   const searchParams = useSearchParams();
@@ -37,10 +38,11 @@ export default function NotificationsPage() {
       <Typography variant="h4" sx={{ textAlign: "center" }}>
         {authUser.displayName}'s notifications:
       </Typography>
-      <Box
+      <PaperBox
+        colour="light"
+        variant="main"
         sx={{
-          border: "2px solid #4F378B",
-          backgroundColor: "pink",
+          py: 2,
           m: 3,
           borderRadius: "12px",
         }}
@@ -59,7 +61,7 @@ export default function NotificationsPage() {
             Community
           </Typography>
           <Typography>
-            Thomai mentioned you in a panel comment <ChatCircle size={24} />
+            <ChatCircle size={24} /> Thomai mentioned you in a panel comment
           </Typography>
           <Typography
             sx={{ fontSize: ".75rem", fontStyle: "italic", marginTop: 1 }}
@@ -86,8 +88,8 @@ export default function NotificationsPage() {
           </Typography>
 
           <Typography>
-            The <span sx={{ fontSize: "32px" }}>Growth</span> comic you have
-            contributed to has been finished by Holly! <CheckCircle size={24} />
+            <CheckCircle size={24} /> The Growth comic you have contributed to
+            has been finished by Holly!
           </Typography>
           <Typography
             sx={{ fontSize: ".75rem", fontStyle: "italic", marginTop: 1 }}
@@ -115,8 +117,8 @@ export default function NotificationsPage() {
             Streak
           </Typography>
           <Typography>
-            Your 4 day streak is on fire - don't stop drawing!
-            <FireSimple size={24} />
+            <FireSimple size={24} /> Your 4 day streak is on fire - don't stop
+            drawing!
           </Typography>
           <Typography
             sx={{ fontSize: ".75rem", fontStyle: "italic", marginTop: 1 }}
@@ -142,7 +144,7 @@ export default function NotificationsPage() {
             Community
           </Typography>
           <Typography>
-            Scott has liked your comic panel! <Heart size={24} />
+            <Heart size={24} /> Scott has liked your comic panel!
           </Typography>
           <Typography
             sx={{ fontSize: ".75rem", fontStyle: "italic", marginTop: 1 }}
@@ -168,8 +170,8 @@ export default function NotificationsPage() {
             Create
           </Typography>
           <Typography>
-            Harrie has added a panel to one of your comics{" "}
-            <FilePlus size={24} />
+            <FilePlus size={24} /> Harrie has added a panel to one of your
+            comics{" "}
           </Typography>
           <Typography
             sx={{ fontSize: ".75rem", fontStyle: "italic", marginTop: 1 }}
@@ -194,8 +196,9 @@ export default function NotificationsPage() {
           >
             Friend request
           </Typography>
+
           <Typography>
-            Kyle has added you as a friend! Send a wave <HandWaving size={24} />
+            <HandWaving size={24} /> Kyle has added you as a friend! Send a wave
           </Typography>
           <Typography
             sx={{ fontSize: ".75rem", fontStyle: "italic", marginTop: 1 }}
@@ -206,7 +209,7 @@ export default function NotificationsPage() {
             10/03/22 - 17:08pm
           </Typography>
         </Box>
-      </Box>
+      </PaperBox>
     </Box>
   );
 }
