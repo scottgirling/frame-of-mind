@@ -1,3 +1,5 @@
+Add full README!
+
 Installation instructions to run the project:
 
 (npm install primereact)
